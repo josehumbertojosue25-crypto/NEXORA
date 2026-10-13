@@ -32,35 +32,41 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build web application
+      - name: Build web app
         run: npm run build
 
-      - name: Install Capacitor CLI
-        run: npm install @capacitor/cli @capacitor/core
+      - name: Install Capacitor
+        run: |
+          npm install @capacitor/core @capacitor/cli
 
       - name: Add Android platform
         run: |
           npx cap add android || true
 
-      - name: Sync Capacitor Android
-        run: npx cap sync android
+      - name: Sync Capacitor
+        run: |
+          npx cap sync android
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK packages
+      - name: Accept Android licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
+      - name: Install Android packages
         run: |
           sdkmanager "platform-tools"
-          sdkmanager "platforms;android-36"
-          sdkmanager "build-tools;36.0.0"
+          sdkmanager "platforms;android-35"
+          sdkmanager "build-tools;35.0.0"
 
-      - name: Build Debug APK
+      - name: Build APK
         working-directory: android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Upload NEXORA JH APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: NEXORA-JH-APK
