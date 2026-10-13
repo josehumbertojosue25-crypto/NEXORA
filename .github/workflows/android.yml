@@ -31,6 +31,15 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android Packages
+        run: |
+          sdkmanager "platform-tools" \
+          "platforms;android-36" \
+          "build-tools;36.0.0"
+
       - name: Install Dependencies
         run: npm install
 
@@ -43,13 +52,6 @@ jobs:
 
       - name: Sync Capacitor
         run: npx cap sync android
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android Packages
-        run: |
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Build APK
         working-directory: android
