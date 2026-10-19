@@ -16,7 +16,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Instalar Dependências
         run: npm install --legacy-peer-deps
@@ -35,7 +35,7 @@ jobs:
 
       - name: Sincronizar Capacitor e Compilar APK
         run: |
-          npx cap sync android || true
+          npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
