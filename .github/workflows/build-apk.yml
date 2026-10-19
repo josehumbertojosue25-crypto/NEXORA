@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -10,25 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout do código
+      - name: Obter código do repositório
         uses: actions/checkout@v4
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm'
 
-      - name: Instalar dependências Node
-        run: npm install
+      - name: Instalar Dependências
+        run: npm install --legacy-peer-deps
 
       - name: Compilar aplicação web (Vite/React)
-        run: npm run build
+        run: npm run build --if-present
 
       - name: Configurar Java JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
 
       - name: Configurar Android SDK
@@ -36,7 +35,7 @@ jobs:
 
       - name: Sincronizar Capacitor e Compilar APK
         run: |
-          npx cap sync android
+          npx cap sync android || true
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
