@@ -1,12 +1,24 @@
 import React, { useState } from 'react';
+import { abrir } from './navegar';
+
+const ATALHOS: Record<string, string> = {
+  Google: 'https://www.google.com',
+  YouTube: 'https://www.youtube.com',
+  GitHub: 'https://github.com',
+  Wikipedia: 'https://pt.wikipedia.org',
+};
 
 export default function App() {
   const [url, setUrl] = useState('');
 
+  const ir = (texto: string) => {
+    abrir(texto).catch(() => alert('Não foi possível abrir o endereço.'));
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url) return;
-    alert(`A aceder a: ${url}`);
+    if (!url.trim()) return;
+    ir(url);
   };
 
   return (
@@ -41,6 +53,12 @@ export default function App() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="Pesquisar ou escrever endereço..."
+          autoCapitalize="none"
+          autoCorrect="off"
+          autoComplete="off"
+          spellCheck={false}
+          inputMode="url"
+          enterKeyHint="go"
           style={{
             flex: 1,
             padding: '12px 16px',
@@ -64,8 +82,8 @@ export default function App() {
       </form>
 
       <div style={{ display: 'flex', gap: '15px', marginTop: '30px', flexWrap: 'wrap', justifyContent: 'center' }}>
-        {['Google', 'YouTube', 'GitHub', 'Wikipedia'].map((site) => (
-          <button key={site} onClick={() => alert(`Atalho: ${site}`)} style={{
+        {Object.keys(ATALHOS).map((site) => (
+          <button key={site} onClick={() => ir(ATALHOS[site])} style={{
             padding: '8px 16px',
             backgroundColor: '#1F2937',
             border: '1px solid #374151',
