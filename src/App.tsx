@@ -13,6 +13,7 @@ import {
 import type { Config } from './armazem'
 
 const FUNDO = '/fundo.png'
+const FUNDO_CLARO = '/fundo-claro.png'
 
 type Aba = 'inicio' | 'favoritos' | 'historico' | 'definicoes'
 
@@ -25,9 +26,9 @@ const TEMAS = {
     botao: 'rgba(30,41,59,0.8)', botaoBorda: 'rgba(99,102,241,0.45)', botaoTexto: '#E2E8F0',
   },
   claro: {
-    fundo: '#F1F5F9', texto: '#0F172A', suave: '#64748B',
-    cartao: '#FFFFFF', borda: '#E2E8F0',
-    botao: '#E2E8F0', botaoBorda: '#CBD5E1', botaoTexto: '#334155',
+    fundo: '#F1F5F9', texto: '#0F172A', suave: '#475569',
+    cartao: 'rgba(255,255,255,0.85)', borda: 'rgba(148,163,184,0.5)',
+    botao: 'rgba(226,232,240,0.9)', botaoBorda: '#CBD5E1', botaoTexto: '#334155',
   },
 }
 
@@ -193,16 +194,16 @@ export default function App() {
     background: 'none', border: 'none', color: t.suave, fontSize: '1.1rem', cursor: 'pointer', padding: '4px 8px',
   }
 
-  const veu = aba === 'inicio' ? 0.1 : 0.65
-  const estiloFundo: React.CSSProperties = escuro
-    ? {
-        backgroundColor: '#050816',
-        backgroundImage: `linear-gradient(rgba(5,8,22,${veu}), rgba(5,8,22,${veu})), url(${FUNDO})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center top',
-        backgroundRepeat: 'no-repeat',
-      }
-    : { backgroundColor: t.fundo }
+  const corVeu = escuro ? '5,8,22' : '241,245,249'
+  const veu = aba === 'inicio' ? 0.1 : escuro ? 0.65 : 0.8
+  const imagemFundo = escuro ? FUNDO : FUNDO_CLARO
+  const estiloFundo: React.CSSProperties = {
+    backgroundColor: t.fundo,
+    backgroundImage: `linear-gradient(rgba(${corVeu},${veu}), rgba(${corVeu},${veu})), url(${imagemFundo})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center top',
+    backgroundRepeat: 'no-repeat',
+  }
 
   return (
     <div style={{
