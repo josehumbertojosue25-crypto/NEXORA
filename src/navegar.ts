@@ -1,4 +1,4 @@
-import { Browser } from '@capacitor/browser'
+import { InAppBrowser } from '@capgo/inappbrowser'
 
 export function montarUrl(texto: string): string {
   const t = texto.trim()
@@ -20,5 +20,5 @@ export function montarUrl(texto: string): string {
 export async function abrir(texto: string) {
   const url = montarUrl(texto)
   if (!url) return
-  await Browser.open({ url })
+  await InAppBrowser.openWebView({ url })
 }
