@@ -21,8 +21,8 @@ jobs:
       - name: Instalar Dependências
         run: npm install --legacy-peer-deps
 
-      - name: Compilar aplicação web (Vite/React)
-        run: npm run build --if-present
+      - name: Compilar Aplicação Web (Vite)
+        run: npm run build
 
       - name: Configurar Java JDK 21
         uses: actions/setup-java@v4
@@ -33,9 +33,13 @@ jobs:
       - name: Aceitar Licenças do Android SDK
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Sincronizar Capacitor e Compilar APK
+      - name: Copiar Assets e Sincronizar Capacitor
         run: |
+          npx cap copy android
           npx cap sync android
+
+      - name: Compilar APK Android
+        run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
