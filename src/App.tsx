@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { abrir, montarUrl } from './navegar'
 import {
   adicionarFavorito,
@@ -18,6 +18,18 @@ const FUNDO_CLARO = '/FUNDO_CLARO.png'
 type Aba = 'inicio' | 'favoritos' | 'historico' | 'definicoes'
 
 const GRAD = 'linear-gradient(135deg, #22D3EE, #3B82F6 50%, #8B5CF6)'
+
+const TEXTO_GRAD: React.CSSProperties = {
+  background: GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+}
+
+const ANIMACOES = `
+@keyframes nx-entrar { from { opacity: 0; transform: scale(0.4) rotate(-12deg); } to { opacity: 1; transform: scale(1) rotate(0deg); } }
+@keyframes nx-subir { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes nx-onda { 0% { transform: scale(0.8); opacity: 0.7; } 100% { transform: scale(2); opacity: 0; } }
+@keyframes nx-carregar { from { width: 0%; } to { width: 100%; } }
+@keyframes nx-flutuar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+`
 
 const TEMAS = {
   escuro: {
@@ -106,13 +118,84 @@ function CartaoSite({ titulo, url, aoTocar, estilo }: {
   )
 }
 
+function Abertura({ aoTerminar }: { aoTerminar: () => void }) {
+  const [saindo, setSaindo] = useState(false)
+
+  useEffect(() => {
+    const a = window.setTimeout(() => setSaindo(true), 2300)
+    const b = window.setTimeout(aoTerminar, 2900)
+    return () => {
+      window.clearTimeout(a)
+      window.clearTimeout(b)
+    }
+  }, [aoTerminar])
+
+  const onda: React.CSSProperties = {
+    position: 'absolute', inset: 0, borderRadius: '50%',
+    border: '2px solid rgba(56,189,248,0.6)',
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 100, backgroundColor: '#050816',
+      backgroundImage: `linear-gradient(rgba(5,8,22,0.5), rgba(5,8,22,0.8)), url(${FUNDO})`,
+      backgroundSize: 'cover', backgroundPosition: 'center top',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'sans-serif',
+      opacity: saindo ? 0 : 1, transform: saindo ? 'scale(1.06)' : 'scale(1)',
+      transition: 'opacity 0.6s ease, transform 0.6s ease',
+    }}>
+      <div style={{
+        position: 'relative', width: 120, height: 120, display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        animation: 'nx-entrar 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both',
+      }}>
+        <span style={{ ...onda, animation: 'nx-onda 1.8s ease-out 0.6s infinite' }} />
+        <span style={{ ...onda, animation: 'nx-onda 1.8s ease-out 1.2s infinite' }} />
+        <svg width="76" height="76" viewBox="0 0 24 24" fill="none" stroke="#38BDF8"
+          strokeWidth="1.6" strokeLinejoin="round"
+          style={{ filter: 'drop-shadow(0 0 10px rgba(56,189,248,0.8))' }}>
+          <path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z" />
+        </svg>
+      </div>
+
+      <div style={{
+        marginTop: 26, fontSize: '2.4rem', fontWeight: 800, fontStyle: 'italic',
+        letterSpacing: 1, ...TEXTO_GRAD, animation: 'nx-subir 0.8s ease 0.5s both',
+      }}>
+        NEXORA JH
+      </div>
+
+      <div style={{
+        marginTop: 8, color: '#94A3B8', fontSize: '0.95rem',
+        animation: 'nx-subir 0.8s ease 0.8s both',
+      }}>
+        O teu navegador moderno e seguro
+      </div>
+
+      <div style={{
+        marginTop: 36, width: 170, height: 4, borderRadius: 4, overflow: 'hidden',
+        backgroundColor: 'rgba(255,255,255,0.15)', animation: 'nx-subir 0.6s ease 1s both',
+      }}>
+        <div style={{
+          height: '100%', borderRadius: 4, background: GRAD,
+          animation: 'nx-carregar 1.9s ease-in-out 1s both',
+        }} />
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [texto, setTexto] = useState('')
   const [aba, setAba] = useState<Aba>('inicio')
   const [favoritos, setFavoritos] = useState(lerFavoritos)
   const [historico, setHistorico] = useState(lerHistorico)
   const [config, setConfig] = useState<Config>(lerConfig)
+  const [abertura, setAbertura] = useState(true)
   const campo = useRef<HTMLInputElement>(null)
+
+  const terminarAbertura = useCallback(() => setAbertura(false), [])
 
   const t = TEMAS[config.tema]
   const escuro = config.tema === 'escuro'
@@ -167,9 +250,11 @@ export default function App() {
     .sort((a, b) => b.vezes - a.vezes)
     .slice(0, 6)
 
-  const textoGrad: React.CSSProperties = {
-    background: GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-  }
+  const entrada = (atraso: number): React.CSSProperties =>
+    abertura
+      ? { opacity: 0 }
+      : { animation: `nx-subir 0.7s ease ${atraso}s both` }
+
   const botao: React.CSSProperties = {
     padding: '8px 16px', backgroundColor: t.botao, border: `1px solid ${t.botaoBorda}`,
     borderRadius: '10px', color: t.botaoTexto, cursor: 'pointer', fontSize: '0.85rem',
@@ -213,14 +298,20 @@ export default function App() {
       minHeight: '100vh', fontFamily: 'sans-serif', padding: '20px 18px 110px 18px',
       boxSizing: 'border-box', textAlign: 'left',
     }}>
+      <style>{ANIMACOES}</style>
+
+      {abertura && <Abertura aoTerminar={terminarAbertura} />}
+
       {aba === 'inicio' && (
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', ...entrada(0),
+          }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#38BDF8"
                   strokeWidth="1.8" strokeLinejoin="round"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z" /></svg>
-                <span style={{ fontSize: '1.9rem', fontWeight: 800, fontStyle: 'italic', ...textoGrad }}>
+                <span style={{ fontSize: '1.9rem', fontWeight: 800, fontStyle: 'italic', ...TEXTO_GRAD }}>
                   NEXORA JH
                 </span>
               </div>
@@ -233,17 +324,23 @@ export default function App() {
             }}><Icone nome="menu" /></button>
           </div>
 
-          <h2 style={{ fontSize: '1.7rem', lineHeight: 1.25, margin: '70px 0 18px 0', maxWidth: '62%', ...textoGrad }}>
+          <h2 style={{
+            fontSize: '1.7rem', lineHeight: 1.25, margin: '70px 0 18px 0', maxWidth: '62%',
+            ...TEXTO_GRAD, ...entrada(0.1),
+          }}>
             Explore o mundo com mais liberdade!
           </h2>
 
-          <div style={{ display: 'flex', gap: 14, color: t.suave, fontSize: '0.78rem', flexWrap: 'wrap', marginBottom: 28 }}>
+          <div style={{
+            display: 'flex', gap: 14, color: t.suave, fontSize: '0.78rem',
+            flexWrap: 'wrap', marginBottom: 28, ...entrada(0.2),
+          }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icone nome="escudo" tamanho={18} /> Rápido</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icone nome="cadeado" tamanho={18} /> Seguro</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icone nome="raio" tamanho={18} /> Confiável</span>
           </div>
 
-          <div style={{ padding: 2, borderRadius: 999, background: GRAD }}>
+          <div style={{ padding: 2, borderRadius: 999, background: GRAD, ...entrada(0.3) }}>
             <form onSubmit={handleSearch} style={{
               display: 'flex', alignItems: 'center', gap: 8, borderRadius: 999,
               background: escuro ? '#0A1024' : '#FFFFFF', padding: '4px 4px 4px 16px',
@@ -279,7 +376,9 @@ export default function App() {
             </button>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 26 }}>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 26, ...entrada(0.4),
+          }}>
             {favoritos.slice(0, 8).map((f) => (
               <CartaoSite key={f.url} titulo={f.titulo} url={f.url}
                 aoTocar={() => ir(f.url)} estilo={cartaoAtalho} />
@@ -287,7 +386,7 @@ export default function App() {
           </div>
 
           {maisVisitados.length > 0 && (
-            <div style={{ marginTop: 24 }}>
+            <div style={{ marginTop: 24, ...entrada(0.5) }}>
               <p style={{ color: t.suave, fontSize: '0.8rem', margin: '0 0 10px 0' }}>Mais visitados</p>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {maisVisitados.map((v) => (
@@ -297,20 +396,24 @@ export default function App() {
             </div>
           )}
 
-          <button onClick={() => campo.current?.focus()} style={{
-            width: '100%', marginTop: 28, display: 'flex', alignItems: 'center', gap: 14,
-            padding: '14px 16px', borderRadius: 20, textAlign: 'left', cursor: 'pointer',
-            backgroundColor: t.cartao, border: `1px solid ${t.borda}`, color: t.texto,
-          }}>
-            <Foguete />
-            <span style={{ flex: 1 }}>
-              <span style={{ display: 'block', fontWeight: 'bold', fontSize: '1.05rem' }}>Navegação sem limites</span>
-              <span style={{ display: 'block', color: t.suave, fontSize: '0.85rem', marginTop: 4 }}>
-                Descobre, pesquisa, aprende e evolui cada dia mais.
+          <div style={entrada(0.6)}>
+            <button onClick={() => campo.current?.focus()} style={{
+              width: '100%', marginTop: 28, display: 'flex', alignItems: 'center', gap: 14,
+              padding: '14px 16px', borderRadius: 20, textAlign: 'left', cursor: 'pointer',
+              backgroundColor: t.cartao, border: `1px solid ${t.borda}`, color: t.texto,
+            }}>
+              <span style={{ display: 'inline-flex', animation: 'nx-flutuar 3s ease-in-out infinite' }}>
+                <Foguete />
               </span>
-            </span>
-            <span style={{ color: '#38BDF8', display: 'flex' }}><Icone nome="direita" /></span>
-          </button>
+              <span style={{ flex: 1 }}>
+                <span style={{ display: 'block', fontWeight: 'bold', fontSize: '1.05rem' }}>Navegação sem limites</span>
+                <span style={{ display: 'block', color: t.suave, fontSize: '0.85rem', marginTop: 4 }}>
+                  Descobre, pesquisa, aprende e evolui cada dia mais.
+                </span>
+              </span>
+              <span style={{ color: '#38BDF8', display: 'flex' }}><Icone nome="direita" /></span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -379,40 +482,4 @@ export default function App() {
 
           <p style={{ color: t.suave, fontSize: '0.85rem' }}>Tema</p>
           <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-            <button style={config.tema === 'escuro' ? botaoAtivo : botao}
-              onClick={() => mudarConfig({ tema: 'escuro' })}>🌙 Escuro</button>
-            <button style={config.tema === 'claro' ? botaoAtivo : botao}
-              onClick={() => mudarConfig({ tema: 'claro' })}>☀️ Claro</button>
-          </div>
-
-          <p style={{ color: t.suave, fontSize: '0.85rem' }}>Modo privado</p>
-          <button style={config.privado ? botaoAtivo : botao}
-            onClick={() => mudarConfig({ privado: !config.privado })}>
-            {config.privado ? '🕶️ Ativo: não guarda histórico' : 'Desativado'}
-          </button>
-        </div>
-      )}
-
-      <div style={{
-        position: 'fixed', left: 10, right: 10, bottom: 10, display: 'flex', zIndex: 5,
-        backgroundColor: escuro ? 'rgba(10,16,36,0.92)' : 'rgba(255,255,255,0.95)',
-        border: `1px solid ${t.borda}`, borderRadius: 24, backdropFilter: 'blur(8px)',
-      }}>
-        {ABAS.map((a) => (
-          <button key={a.id} onClick={() => { setAba(a.id); atualizar() }} style={{
-            flex: 1, padding: '10px 4px 8px 4px', background: 'none', border: 'none',
-            color: aba === a.id ? '#38BDF8' : t.suave, cursor: 'pointer', fontSize: '0.72rem',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-          }}>
-            <Icone nome={a.id} />
-            {a.nome}
-            <span style={{
-              height: 3, width: 28, borderRadius: 3, marginTop: 2,
-              background: aba === a.id ? GRAD : 'transparent',
-            }} />
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
+            <button style={config.tema === 'escuro' ? bota
