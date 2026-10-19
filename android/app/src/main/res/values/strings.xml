@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NEXORA-JH</string>
+    <string name="title_activity_main">NEXORA-JH</string>
+    <string name="package_name">jhmoz.nexora</string>
+    <string name="custom_url_scheme">jhmoz.nexora</string>
+</resources>
