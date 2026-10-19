@@ -13,7 +13,7 @@ import {
 import type { Config } from './armazem'
 
 const FUNDO = '/fundo.png'
-const FUNDO_CLARO = '/fundo-claro.png'
+const FUNDO_CLARO = '/FUNDO_CLARO.png'
 
 type Aba = 'inicio' | 'favoritos' | 'historico' | 'definicoes'
 
@@ -186,7 +186,9 @@ export default function App() {
     backgroundColor: t.cartao, border: `1px solid ${t.borda}`, borderRadius: '14px',
     padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px',
   }
-  const titulo: React.CSSProperties = { fontSize: '1.2rem', fontWeight: 'bold', margin: '0 0 14px 0' }
+  const titulo: React.CSSProperties = {
+    fontSize: '1.2rem', fontWeight: 'bold', margin: '0 0 14px 0', color: t.texto,
+  }
   const lista: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }
   const textoLinha: React.CSSProperties = { flex: 1, minWidth: 0, cursor: 'pointer', textAlign: 'left' }
   const cortar: React.CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
@@ -195,7 +197,7 @@ export default function App() {
   }
 
   const corVeu = escuro ? '5,8,22' : '241,245,249'
-  const veu = aba === 'inicio' ? 0.1 : escuro ? 0.65 : 0.8
+  const veu = aba === 'inicio' ? 0.1 : escuro ? 0.65 : 0.45
   const imagemFundo = escuro ? FUNDO : FUNDO_CLARO
   const estiloFundo: React.CSSProperties = {
     backgroundColor: t.fundo,
@@ -208,7 +210,8 @@ export default function App() {
   return (
     <div style={{
       position: 'relative', overflow: 'hidden', ...estiloFundo, color: t.texto,
-      minHeight: '100vh', fontFamily: 'sans-serif', padding: '20px 18px 110px 18px', boxSizing: 'border-box',
+      minHeight: '100vh', fontFamily: 'sans-serif', padding: '20px 18px 110px 18px',
+      boxSizing: 'border-box', textAlign: 'left',
     }}>
       {aba === 'inicio' && (
         <div style={{ position: 'relative', zIndex: 1 }}>
