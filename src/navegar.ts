@@ -1,5 +1,11 @@
+import { registerPlugin } from '@capacitor/core'
 import { InAppBrowser } from '@capgo/inappbrowser'
 import { lerConfig, registarDownload, registarVisita } from './armazem'
+
+// Plugin nativo (Java) que copia o ficheiro para a pasta Download do telemóvel
+const NexoraDownloads = registerPlugin<{
+  guardar(opcoes: { caminho: string; nome: string; tipo: string }): Promise<{ destino: string }>
+}>('NexoraDownloads')
 
 const MOTORES = {
   google: 'https://www.google.com/search?q=',
@@ -107,13 +113,18 @@ async function ativarOuvintes() {
 
   await tentar(() =>
     InAppBrowser.addListener('downloadCompleted', (e) => {
-      registarDownload({
+      const base = {
         nome: e.fileName,
         caminho: e.path,
         tipo: e.mimeType ?? '',
         origem: e.sourceUrl ?? '',
         data: Date.now(),
-      })
+      }
+      NexoraDownloads.guardar({ caminho: e.path, nome: e.fileName, tipo: base.tipo })
+        .then((r) => registarDownload({ ...base, caminho: r.destino }))
+        .catch((err: unknown) =>
+          registarDownload({ ...base, erro: err instanceof Error ? err.message : String(err) }),
+        )
     }),
   )
 
