@@ -1,14 +1,26 @@
 export type Favorito = { titulo: string; url: string }
 export type Visita = { url: string; titulo: string; data: number; vezes: number }
+export type Download = {
+  nome: string
+  caminho: string
+  tipo: string
+  origem: string
+  data: number
+  erro?: string
+}
 export type Config = {
   motor: 'google' | 'duckduckgo' | 'bing'
   tema: 'escuro' | 'claro'
   privado: boolean
+  computador: boolean
+  cookies: boolean
+  seguro: boolean
 }
 
 const CH_FAV = 'nexora_favoritos'
 const CH_HIS = 'nexora_historico'
 const CH_CFG = 'nexora_config'
+const CH_DOW = 'nexora_downloads'
 
 const FAVORITOS_INICIAIS: Favorito[] = [
   { titulo: 'Google', url: 'https://www.google.com/' },
@@ -17,7 +29,14 @@ const FAVORITOS_INICIAIS: Favorito[] = [
   { titulo: 'Wikipedia', url: 'https://pt.wikipedia.org/' },
 ]
 
-const CONFIG_PADRAO: Config = { motor: 'google', tema: 'escuro', privado: false }
+const CONFIG_PADRAO: Config = {
+  motor: 'google',
+  tema: 'escuro',
+  privado: false,
+  computador: false,
+  cookies: true,
+  seguro: true,
+}
 
 function ler<T>(chave: string, padrao: T): T {
   try {
@@ -80,6 +99,18 @@ export function registarVisita(url: string): void {
 
 export function limparHistorico(): void {
   guardar(CH_HIS, [])
+}
+
+export function lerDownloads(): Download[] {
+  return ler<Download[]>(CH_DOW, [])
+}
+
+export function registarDownload(d: Download): void {
+  guardar(CH_DOW, [d, ...lerDownloads()].slice(0, 100))
+}
+
+export function limparDownloads(): void {
+  guardar(CH_DOW, [])
 }
 
 export function lerConfig(): Config {
