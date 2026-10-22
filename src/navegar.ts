@@ -1,3 +1,4 @@
+import { Browser } from '@capacitor/browser'
 import { registerPlugin } from '@capacitor/core'
 import { InAppBrowser } from '@capgo/inappbrowser'
 import { lerConfig, registarDownload, registarVisita } from './armazem'
@@ -138,6 +139,10 @@ async function ativarOuvintes() {
         data: Date.now(),
         erro: e.error,
       })
+      // Plano B: o Chrome (navegador do sistema) descarrega o mesmo link
+      if (e.sourceUrl && /^https?:\/\//i.test(e.sourceUrl)) {
+        Browser.open({ url: e.sourceUrl }).catch(() => {})
+      }
     }),
   )
 
