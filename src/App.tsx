@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { AdMob, BannerAdPosition, BannerAdSize } from '@capacitor-community/admob'
 import { abrir, limparCookies, montarUrl } from './navegar'
 import {
   adicionarFavorito,
@@ -199,6 +201,38 @@ export default function App() {
   const [config, setConfig] = useState<Config>(lerConfig)
   const [abertura, setAbertura] = useState(true)
   const campo = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+
+    let ativo = true
+
+    const iniciarAdMob = async () => {
+      try {
+        await AdMob.initialize()
+        if (!ativo) return
+
+        await AdMob.showBanner({
+          adId: 'ca-app-pub-3940256099942544/6300978111',
+          adSize: BannerAdSize.ADAPTIVE_BANNER,
+          position: BannerAdPosition.BOTTOM_CENTER,
+          margin: 82,
+          isTesting: true,
+        })
+      } catch (erro) {
+        console.error('Erro ao iniciar o banner AdMob:', erro)
+      }
+    }
+
+    void iniciarAdMob()
+
+    return () => {
+      ativo = false
+      void AdMob.hideBanner().catch((erro) => {
+        console.error('Erro ao ocultar o banner AdMob:', erro)
+      })
+    }
+  }, [])
 
   const terminarAbertura = useCallback(() => setAbertura(false), [])
 
