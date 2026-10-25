@@ -3,10 +3,10 @@ import { AdMob, BannerAdPosition, BannerAdSize } from '@capacitor-community/admo
 
 // true = anúncios de TESTE da Google (seguro).
 // Só mude para false depois de criar o AdMob e colar os IDs reais abaixo.
-const USAR_TESTE = true
+const USAR_TESTE = false
 
 const BANNER_TESTE = 'ca-app-pub-3940256099942544/6300978111'
-const BANNER_REAL = 'COLE-AQUI-O-ID-DO-BLOCO-DE-ANUNCIOS'
+const BANNER_REAL = 'ca-app-pub-4653920322395752/8835923354'
 
 // distância do banner à parte de baixo, para ficar acima da barra de navegação
 const MARGEM_BANNER = 84
