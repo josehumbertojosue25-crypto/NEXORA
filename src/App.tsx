@@ -213,11 +213,11 @@ export default function App() {
         if (!ativo) return
 
         await AdMob.showBanner({
-          adId: 'ca-app-pub-3940256099942544/6300978111',
+          adId: 'ca-app-pub-4653920322395752/8835923354',
           adSize: BannerAdSize.ADAPTIVE_BANNER,
           position: BannerAdPosition.BOTTOM_CENTER,
           margin: 82,
-          isTesting: true,
+          isTesting: false,
         })
       } catch (erro) {
         console.error('Erro ao iniciar o banner AdMob:', erro)
