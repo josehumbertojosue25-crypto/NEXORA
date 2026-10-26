@@ -1,3 +1,4 @@
+
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { AdMob, BannerAdPosition, BannerAdSize } from '@capacitor-community/admob'
@@ -16,6 +17,12 @@ import {
 } from './armazem'
 import type { Config } from './armazem'
 
+declare global {
+  interface Window {
+    adsbygoogle?: Record<string, unknown>[]
+  }
+}
+
 const FUNDO = '/fundo.png'
 const FUNDO_CLARO = '/FUNDO_CLARO.png'
 
@@ -25,7 +32,9 @@ type VistaHistorico = 'sites' | 'downloads'
 const GRAD = 'linear-gradient(135deg, #22D3EE, #3B82F6 50%, #8B5CF6)'
 
 const TEXTO_GRAD: React.CSSProperties = {
-  background: GRAD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+  background: GRAD,
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
 }
 
 const ANIMACOES = `
@@ -38,14 +47,24 @@ const ANIMACOES = `
 
 const TEMAS = {
   escuro: {
-    fundo: '#050816', texto: '#F3F4F6', suave: '#94A3B8',
-    cartao: 'rgba(15,23,42,0.75)', borda: 'rgba(96,165,250,0.35)',
-    botao: 'rgba(30,41,59,0.8)', botaoBorda: 'rgba(99,102,241,0.45)', botaoTexto: '#E2E8F0',
+    fundo: '#050816',
+    texto: '#F3F4F6',
+    suave: '#94A3B8',
+    cartao: 'rgba(15,23,42,0.75)',
+    borda: 'rgba(96,165,250,0.35)',
+    botao: 'rgba(30,41,59,0.8)',
+    botaoBorda: 'rgba(99,102,241,0.45)',
+    botaoTexto: '#E2E8F0',
   },
   claro: {
-    fundo: '#F1F5F9', texto: '#0F172A', suave: '#475569',
-    cartao: 'rgba(255,255,255,0.85)', borda: 'rgba(148,163,184,0.5)',
-    botao: 'rgba(226,232,240,0.9)', botaoBorda: '#CBD5E1', botaoTexto: '#334155',
+    fundo: '#F1F5F9',
+    texto: '#0F172A',
+    suave: '#475569',
+    cartao: 'rgba(255,255,255,0.85)',
+    borda: 'rgba(148,163,184,0.5)',
+    botao: 'rgba(226,232,240,0.9)',
+    botaoBorda: '#CBD5E1',
+    botaoTexto: '#334155',
   },
 }
 
@@ -58,8 +77,59 @@ const ABAS: { id: Aba; nome: string }[] = [
 
 function formatarData(ms: number): string {
   return new Date(ms).toLocaleString('pt-PT', {
-    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
   })
+}
+
+/**
+ * Carrega o anúncio apenas na versão web.
+ * Na aplicação Android, o AdMob continua a ser utilizado.
+ */
+function AnuncioAdSense() {
+  const anuncioRef = useRef<HTMLModElement>(null)
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) return
+
+    const anuncio = anuncioRef.current
+    if (!anuncio || anuncio.dataset.nexoraProcessado === 'true') return
+
+    anuncio.dataset.nexoraProcessado = 'true'
+
+    try {
+      ;(window.adsbygoogle = window.adsbygoogle || []).push({})
+    } catch (erro) {
+      console.error('Erro ao preparar o anúncio AdSense:', erro)
+    }
+  }, [])
+
+  if (Capacitor.isNativePlatform()) return null
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
+        overflow: 'hidden',
+        margin: '24px auto',
+        textAlign: 'center',
+      }}
+    >
+      <ins
+        ref={anuncioRef}
+        className="adsbygoogle"
+        style={{ display: 'block', width: '100%' }}
+        data-ad-client="ca-pub-7936089745101654"
+        data-ad-slot="4763217913"
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
+    </div>
+  )
 }
 
 function Icone({ nome, tamanho = 24 }: { nome: string; tamanho?: number }) {
@@ -76,11 +146,73 @@ function Icone({ nome, tamanho = 24 }: { nome: string; tamanho?: number }) {
     raio: <path d="M13 2L4 14h7l-1 8 9-12h-7z" />,
     direita: <path d="M9 6l6 6-6 6" />,
   }
+
   return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width={tamanho}
+      height={tamanho}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       {caminhos[nome]}
     </svg>
+  )
+}
+
+function CartaoSite({
+  titulo,
+  url,
+  aoTocar,
+  estilo,
+}: {
+  titulo: string
+  url: string
+  aoTocar: () => void
+  estilo: React.CSSProperties
+}) {
+  const [falhou, setFalhou] = useState(false)
+
+  let host = ''
+  try {
+    host = new URL(url).hostname
+  } catch {
+    host = ''
+  }
+
+  return (
+    <button onClick={aoTocar} style={estilo}>
+      {host && !falhou ? (
+        <img
+          src={`https://icons.duckduckgo.com/ip3/${host}.ico`}
+          width={36}
+          height={36}
+          alt=""
+          onError={() => setFalhou(true)}
+          style={{ borderRadius: 8 }}
+        />
+      ) : (
+        <span
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            background: GRAD,
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold',
+          }}
+        >
+          {titulo.charAt(0).toUpperCase()}
+        </span>
+      )}
+      <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{titulo}</span>
+    </button>
   )
 }
 
@@ -101,34 +233,13 @@ function Foguete() {
   )
 }
 
-function CartaoSite({ titulo, url, aoTocar, estilo }: {
-  titulo: string; url: string; aoTocar: () => void; estilo: React.CSSProperties
-}) {
-  const [falhou, setFalhou] = useState(false)
-  let host = ''
-  try { host = new URL(url).hostname } catch { host = '' }
-  return (
-    <button onClick={aoTocar} style={estilo}>
-      {host && !falhou ? (
-        <img src={`https://icons.duckduckgo.com/ip3/${host}.ico`} width={36} height={36}
-          alt="" onError={() => setFalhou(true)} style={{ borderRadius: 8 }} />
-      ) : (
-        <span style={{
-          width: 36, height: 36, borderRadius: 10, background: GRAD, color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold',
-        }}>{titulo.charAt(0).toUpperCase()}</span>
-      )}
-      <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>{titulo}</span>
-    </button>
-  )
-}
-
 function Abertura({ aoTerminar }: { aoTerminar: () => void }) {
   const [saindo, setSaindo] = useState(false)
 
   useEffect(() => {
     const a = window.setTimeout(() => setSaindo(true), 2300)
     const b = window.setTimeout(aoTerminar, 2900)
+
     return () => {
       window.clearTimeout(a)
       window.clearTimeout(b)
@@ -136,56 +247,103 @@ function Abertura({ aoTerminar }: { aoTerminar: () => void }) {
   }, [aoTerminar])
 
   const onda: React.CSSProperties = {
-    position: 'absolute', inset: 0, borderRadius: '50%',
+    position: 'absolute',
+    inset: 0,
+    borderRadius: '50%',
     border: '2px solid rgba(56,189,248,0.6)',
   }
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 100, backgroundColor: '#050816',
-      backgroundImage: `linear-gradient(rgba(5,8,22,0.5), rgba(5,8,22,0.8)), url(${FUNDO})`,
-      backgroundSize: 'cover', backgroundPosition: 'center top',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'sans-serif',
-      opacity: saindo ? 0 : 1, transform: saindo ? 'scale(1.06)' : 'scale(1)',
-      transition: 'opacity 0.6s ease, transform 0.6s ease',
-    }}>
-      <div style={{
-        position: 'relative', width: 120, height: 120, display: 'flex',
-        alignItems: 'center', justifyContent: 'center',
-        animation: 'nx-entrar 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both',
-      }}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 100,
+        backgroundColor: '#050816',
+        backgroundImage: `linear-gradient(rgba(5,8,22,0.5), rgba(5,8,22,0.8)), url(${FUNDO})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center top',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'sans-serif',
+        opacity: saindo ? 0 : 1,
+        transform: saindo ? 'scale(1.06)' : 'scale(1)',
+        transition: 'opacity 0.6s ease, transform 0.6s ease',
+      }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          width: 120,
+          height: 120,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: 'nx-entrar 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both',
+        }}
+      >
         <span style={{ ...onda, animation: 'nx-onda 1.8s ease-out 0.6s infinite' }} />
         <span style={{ ...onda, animation: 'nx-onda 1.8s ease-out 1.2s infinite' }} />
-        <svg width="76" height="76" viewBox="0 0 24 24" fill="none" stroke="#38BDF8"
-          strokeWidth="1.6" strokeLinejoin="round"
-          style={{ filter: 'drop-shadow(0 0 10px rgba(56,189,248,0.8))' }}>
+        <svg
+          width="76"
+          height="76"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#38BDF8"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+          style={{ filter: 'drop-shadow(0 0 10px rgba(56,189,248,0.8))' }}
+        >
           <path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z" />
         </svg>
       </div>
 
-      <div style={{
-        marginTop: 26, fontSize: '2.4rem', fontWeight: 800, fontStyle: 'italic',
-        letterSpacing: 1, ...TEXTO_GRAD, animation: 'nx-subir 0.8s ease 0.5s both',
-      }}>
+      <div
+        style={{
+          marginTop: 26,
+          fontSize: '2.4rem',
+          fontWeight: 800,
+          fontStyle: 'italic',
+          letterSpacing: 1,
+          ...TEXTO_GRAD,
+          animation: 'nx-subir 0.8s ease 0.5s both',
+        }}
+      >
         NEXORA JH
       </div>
 
-      <div style={{
-        marginTop: 8, color: '#94A3B8', fontSize: '0.95rem',
-        animation: 'nx-subir 0.8s ease 0.8s both',
-      }}>
+      <div
+        style={{
+          marginTop: 8,
+          color: '#94A3B8',
+          fontSize: '0.95rem',
+          animation: 'nx-subir 0.8s ease 0.8s both',
+        }}
+      >
         O teu navegador moderno e seguro
       </div>
 
-      <div style={{
-        marginTop: 36, width: 170, height: 4, borderRadius: 4, overflow: 'hidden',
-        backgroundColor: 'rgba(255,255,255,0.15)', animation: 'nx-subir 0.6s ease 1s both',
-      }}>
-        <div style={{
-          height: '100%', borderRadius: 4, background: GRAD,
-          animation: 'nx-carregar 1.9s ease-in-out 1s both',
-        }} />
+      <div
+        style={{
+          marginTop: 36,
+          width: 170,
+          height: 4,
+          borderRadius: 4,
+          overflow: 'hidden',
+          backgroundColor: 'rgba(255,255,255,0.15)',
+          animation: 'nx-subir 0.6s ease 1s both',
+        }}
+      >
+        <div
+          style={{
+            height: '100%',
+            borderRadius: 4,
+            background: GRAD,
+            animation: 'nx-carregar 1.9s ease-in-out 1s both',
+          }}
+        />
       </div>
     </div>
   )
@@ -202,6 +360,31 @@ export default function App() {
   const [abertura, setAbertura] = useState(true)
   const campo = useRef<HTMLInputElement>(null)
 
+  // AdSense: carrega o script apenas na versão web.
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) return
+
+    const existente = document.querySelector(
+      'script[data-nexora-adsense]',
+    )
+
+    if (existente) return
+
+    const script = document.createElement('script')
+    script.async = true
+    script.dataset.nexoraAdsense = 'true'
+    script.crossOrigin = 'anonymous'
+    script.src =
+      'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7936089745101654'
+
+    script.onerror = () => {
+      console.error('Não foi possível carregar o script do Google AdSense.')
+    }
+
+    document.head.appendChild(script)
+  }, [])
+
+  // AdMob: mantém o banner nativo do Android.
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
 
@@ -251,8 +434,10 @@ export default function App() {
       setHistorico(lerHistorico())
       setDownloads(lerDownloads())
     }
+
     window.addEventListener('focus', aoVoltar)
     document.addEventListener('visibilitychange', aoVoltar)
+
     return () => {
       window.removeEventListener('focus', aoVoltar)
       document.removeEventListener('visibilitychange', aoVoltar)
@@ -280,6 +465,7 @@ export default function App() {
   const guardarFavoritoDoTexto = () => {
     const u = montarUrl(texto)
     if (!u) return
+
     adicionarFavorito({ titulo: nomeDoSite(u), url: u })
     atualizar()
     alert('Guardado nos favoritos.')
@@ -303,44 +489,107 @@ export default function App() {
       : { animation: `nx-subir 0.7s ease ${atraso}s both` }
 
   const botao: React.CSSProperties = {
-    padding: '8px 16px', backgroundColor: t.botao, border: `1px solid ${t.botaoBorda}`,
-    borderRadius: '10px', color: t.botaoTexto, cursor: 'pointer', fontSize: '0.85rem',
+    padding: '8px 16px',
+    backgroundColor: t.botao,
+    border: `1px solid ${t.botaoBorda}`,
+    borderRadius: '10px',
+    color: t.botaoTexto,
+    cursor: 'pointer',
+    fontSize: '0.85rem',
   }
+
   const botaoAtivo: React.CSSProperties = {
-    ...botao, background: GRAD, color: '#FFF', border: 'none',
+    ...botao,
+    background: GRAD,
+    color: '#FFF',
+    border: 'none',
   }
+
   const cartaoAtalho: React.CSSProperties = {
-    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-    padding: '14px 4px', backgroundColor: t.botao, border: `1px solid ${t.botaoBorda}`,
-    borderRadius: 16, color: t.texto, cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+    padding: '14px 4px',
+    backgroundColor: t.botao,
+    border: `1px solid ${t.botaoBorda}`,
+    borderRadius: 16,
+    color: t.texto,
+    cursor: 'pointer',
   }
+
   const linha: React.CSSProperties = {
-    backgroundColor: t.cartao, border: `1px solid ${t.borda}`, borderRadius: '14px',
-    padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px',
+    backgroundColor: t.cartao,
+    border: `1px solid ${t.borda}`,
+    borderRadius: '14px',
+    padding: '12px 14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
   }
+
   const titulo: React.CSSProperties = {
-    fontSize: '1.2rem', fontWeight: 'bold', margin: '0 0 14px 0', color: t.texto,
+    fontSize: '1.2rem',
+    fontWeight: 'bold',
+    margin: '0 0 14px 0',
+    color: t.texto,
   }
+
   const rotulo: React.CSSProperties = {
-    color: t.suave, fontSize: '0.85rem', margin: '18px 0 8px 0',
+    color: t.suave,
+    fontSize: '0.85rem',
+    margin: '18px 0 8px 0',
   }
+
   const nota: React.CSSProperties = {
-    color: t.suave, fontSize: '0.75rem', margin: '6px 0 0 0', lineHeight: 1.4,
+    color: t.suave,
+    fontSize: '0.75rem',
+    margin: '6px 0 0 0',
+    lineHeight: 1.4,
   }
-  const lista: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }
-  const textoLinha: React.CSSProperties = { flex: 1, minWidth: 0, cursor: 'pointer', textAlign: 'left' }
-  const cortar: React.CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+
+  const lista: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    width: '100%',
+  }
+
+  const textoLinha: React.CSSProperties = {
+    flex: 1,
+    minWidth: 0,
+    cursor: 'pointer',
+    textAlign: 'left',
+  }
+
+  const cortar: React.CSSProperties = {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  }
+
   const botaoIcone: React.CSSProperties = {
-    background: 'none', border: 'none', color: t.suave, fontSize: '1.1rem', cursor: 'pointer', padding: '4px 8px',
+    background: 'none',
+    border: 'none',
+    color: t.suave,
+    fontSize: '1.1rem',
+    cursor: 'pointer',
+    padding: '4px 8px',
   }
+
   const botaoPerigo: React.CSSProperties = {
-    ...botao, width: '100%', padding: '12px 16px', marginBottom: 14,
-    border: '1px solid rgba(248,113,113,0.6)', color: escuro ? '#FCA5A5' : '#B91C1C',
+    ...botao,
+    width: '100%',
+    padding: '12px 16px',
+    marginBottom: 14,
+    border: '1px solid rgba(248,113,113,0.6)',
+    color: escuro ? '#FCA5A5' : '#B91C1C',
   }
 
   const corVeu = escuro ? '5,8,22' : '241,245,249'
   const veu = aba === 'inicio' ? 0.1 : escuro ? 0.65 : 0.45
   const imagemFundo = escuro ? FUNDO : FUNDO_CLARO
+
   const estiloFundo: React.CSSProperties = {
     backgroundColor: t.fundo,
     backgroundImage: `linear-gradient(rgba(${corVeu},${veu}), rgba(${corVeu},${veu})), url(${imagemFundo})`,
@@ -350,25 +599,54 @@ export default function App() {
   }
 
   return (
-    <div style={{
-      position: 'relative', overflow: 'hidden', ...estiloFundo, color: t.texto,
-      minHeight: '100vh', fontFamily: 'sans-serif', padding: '20px 18px 110px 18px',
-      boxSizing: 'border-box', textAlign: 'left',
-    }}>
+    <div
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        ...estiloFundo,
+        color: t.texto,
+        minHeight: '100vh',
+        fontFamily: 'sans-serif',
+        padding: '20px 18px 110px 18px',
+        boxSizing: 'border-box',
+        textAlign: 'left',
+      }}
+    >
       <style>{ANIMACOES}</style>
 
       {abertura && <Abertura aoTerminar={terminarAbertura} />}
 
       {aba === 'inicio' && (
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', ...entrada(0),
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              ...entrada(0),
+            }}
+          >
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#38BDF8"
-                  strokeWidth="1.8" strokeLinejoin="round"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z" /></svg>
-                <span style={{ fontSize: '1.9rem', fontWeight: 800, fontStyle: 'italic', ...TEXTO_GRAD }}>
+                <svg
+                  width="34"
+                  height="34"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#38BDF8"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z" />
+                </svg>
+                <span
+                  style={{
+                    fontSize: '1.9rem',
+                    fontWeight: 800,
+                    fontStyle: 'italic',
+                    ...TEXTO_GRAD,
+                  }}
+                >
                   NEXORA JH
                 </span>
               </div>
@@ -376,33 +654,71 @@ export default function App() {
                 {config.privado ? '🕶️ Modo privado ativo' : 'O teu navegador moderno e seguro'}
               </p>
             </div>
-            <button onClick={() => setAba('definicoes')} style={{
-              ...botaoIcone, border: `1px solid ${t.borda}`, borderRadius: 14, padding: 12, color: t.texto,
-            }}><Icone nome="menu" /></button>
+
+            <button
+              onClick={() => setAba('definicoes')}
+              style={{
+                ...botaoIcone,
+                border: `1px solid ${t.borda}`,
+                borderRadius: 14,
+                padding: 12,
+                color: t.texto,
+              }}
+            >
+              <Icone nome="menu" />
+            </button>
           </div>
 
-          <h2 style={{
-            fontSize: '1.7rem', lineHeight: 1.25, margin: '70px 0 18px 0', maxWidth: '62%',
-            ...TEXTO_GRAD, ...entrada(0.1),
-          }}>
+          <h2
+            style={{
+              fontSize: '1.7rem',
+              lineHeight: 1.25,
+              margin: '70px 0 18px 0',
+              maxWidth: '62%',
+              ...TEXTO_GRAD,
+              ...entrada(0.1),
+            }}
+          >
             Explore o mundo com mais liberdade!
           </h2>
 
-          <div style={{
-            display: 'flex', gap: 14, color: t.suave, fontSize: '0.78rem',
-            flexWrap: 'wrap', marginBottom: 28, ...entrada(0.2),
-          }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icone nome="escudo" tamanho={18} /> Rápido</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icone nome="cadeado" tamanho={18} /> Seguro</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><Icone nome="raio" tamanho={18} /> Confiável</span>
+          <div
+            style={{
+              display: 'flex',
+              gap: 14,
+              color: t.suave,
+              fontSize: '0.78rem',
+              flexWrap: 'wrap',
+              marginBottom: 28,
+              ...entrada(0.2),
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Icone nome="escudo" tamanho={18} /> Rápido
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Icone nome="cadeado" tamanho={18} /> Seguro
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Icone nome="raio" tamanho={18} /> Confiável
+            </span>
           </div>
 
           <div style={{ padding: 2, borderRadius: 999, background: GRAD, ...entrada(0.3) }}>
-            <form onSubmit={handleSearch} style={{
-              display: 'flex', alignItems: 'center', gap: 8, borderRadius: 999,
-              background: escuro ? '#0A1024' : '#FFFFFF', padding: '4px 4px 4px 16px',
-            }}>
-              <span style={{ color: t.suave, display: 'flex' }}><Icone nome="lupa" /></span>
+            <form
+              onSubmit={handleSearch}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                borderRadius: 999,
+                background: escuro ? '#0A1024' : '#FFFFFF',
+                padding: '4px 4px 4px 16px',
+              }}
+            >
+              <span style={{ color: t.suave, display: 'flex' }}>
+                <Icone nome="lupa" />
+              </span>
               <input
                 ref={campo}
                 type="text"
@@ -416,14 +732,33 @@ export default function App() {
                 inputMode="url"
                 enterKeyHint="go"
                 style={{
-                  flex: 1, minWidth: 0, padding: '12px 4px', border: 'none',
-                  background: 'transparent', color: t.texto, outline: 'none', fontSize: '1rem',
+                  flex: 1,
+                  minWidth: 0,
+                  padding: '12px 4px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: t.texto,
+                  outline: 'none',
+                  fontSize: '1rem',
                 }}
               />
-              <button type="submit" style={{
-                width: 48, height: 48, borderRadius: '50%', border: 'none', background: GRAD,
-                color: '#FFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}><Icone nome="seta" /></button>
+              <button
+                type="submit"
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: GRAD,
+                  color: '#FFF',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Icone nome="seta" />
+              </button>
             </form>
           </div>
 
@@ -433,42 +768,76 @@ export default function App() {
             </button>
           )}
 
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 26, ...entrada(0.4),
-          }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: 10,
+              marginTop: 26,
+              ...entrada(0.4),
+            }}
+          >
             {favoritos.slice(0, 8).map((f) => (
-              <CartaoSite key={f.url} titulo={f.titulo} url={f.url}
-                aoTocar={() => ir(f.url)} estilo={cartaoAtalho} />
+              <CartaoSite
+                key={f.url}
+                titulo={f.titulo}
+                url={f.url}
+                aoTocar={() => ir(f.url)}
+                estilo={cartaoAtalho}
+              />
             ))}
           </div>
 
+          {/* Google AdSense: aparece apenas na versão web. */}
+          <AnuncioAdSense />
+
           {maisVisitados.length > 0 && (
             <div style={{ marginTop: 24, ...entrada(0.5) }}>
-              <p style={{ color: t.suave, fontSize: '0.8rem', margin: '0 0 10px 0' }}>Mais visitados</p>
+              <p style={{ color: t.suave, fontSize: '0.8rem', margin: '0 0 10px 0' }}>
+                Mais visitados
+              </p>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {maisVisitados.map((v) => (
-                  <button key={v.url} onClick={() => ir(v.url)} style={botao}>{v.titulo}</button>
+                  <button key={v.url} onClick={() => ir(v.url)} style={botao}>
+                    {v.titulo}
+                  </button>
                 ))}
               </div>
             </div>
           )}
 
           <div style={entrada(0.6)}>
-            <button onClick={() => campo.current?.focus()} style={{
-              width: '100%', marginTop: 28, display: 'flex', alignItems: 'center', gap: 14,
-              padding: '14px 16px', borderRadius: 20, textAlign: 'left', cursor: 'pointer',
-              backgroundColor: t.cartao, border: `1px solid ${t.borda}`, color: t.texto,
-            }}>
+            <button
+              onClick={() => campo.current?.focus()}
+              style={{
+                width: '100%',
+                marginTop: 28,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                padding: '14px 16px',
+                borderRadius: 20,
+                textAlign: 'left',
+                cursor: 'pointer',
+                backgroundColor: t.cartao,
+                border: `1px solid ${t.borda}`,
+                color: t.texto,
+              }}
+            >
               <span style={{ display: 'inline-flex', animation: 'nx-flutuar 3s ease-in-out infinite' }}>
                 <Foguete />
               </span>
               <span style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontWeight: 'bold', fontSize: '1.05rem' }}>Navegação sem limites</span>
+                <span style={{ display: 'block', fontWeight: 'bold', fontSize: '1.05rem' }}>
+                  Navegação sem limites
+                </span>
                 <span style={{ display: 'block', color: t.suave, fontSize: '0.85rem', marginTop: 4 }}>
                   Descobre, pesquisa, aprende e evolui cada dia mais.
                 </span>
               </span>
-              <span style={{ color: '#38BDF8', display: 'flex' }}><Icone nome="direita" /></span>
+              <span style={{ color: '#38BDF8', display: 'flex' }}>
+                <Icone nome="direita" />
+              </span>
             </button>
           </div>
         </div>
@@ -477,15 +846,27 @@ export default function App() {
       {aba === 'favoritos' && (
         <div style={{ position: 'relative', zIndex: 1 }}>
           <h2 style={titulo}>⭐ Favoritos</h2>
-          {favoritos.length === 0 && <p style={{ color: t.suave }}>Ainda não tens favoritos.</p>}
+          {favoritos.length === 0 && (
+            <p style={{ color: t.suave }}>Ainda não tens favoritos.</p>
+          )}
           <div style={lista}>
             {favoritos.map((f) => (
               <div key={f.url} style={linha}>
                 <div style={textoLinha} onClick={() => ir(f.url)}>
                   <div style={{ fontWeight: 'bold', ...cortar }}>{f.titulo}</div>
-                  <div style={{ color: t.suave, fontSize: '0.75rem', ...cortar }}>{f.url}</div>
+                  <div style={{ color: t.suave, fontSize: '0.75rem', ...cortar }}>
+                    {f.url}
+                  </div>
                 </div>
-                <button style={botaoIcone} onClick={() => { removerFavorito(f.url); atualizar() }}>✕</button>
+                <button
+                  style={botaoIcone}
+                  onClick={() => {
+                    removerFavorito(f.url)
+                    atualizar()
+                  }}
+                >
+                  ✕
+                </button>
               </div>
             ))}
           </div>
@@ -497,24 +878,39 @@ export default function App() {
           <h2 style={titulo}>🕘 Histórico</h2>
 
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-            <button style={vistaHist === 'sites' ? botaoAtivo : botao}
-              onClick={() => setVistaHist('sites')}>🌐 Sites</button>
-            <button style={vistaHist === 'downloads' ? botaoAtivo : botao}
-              onClick={() => setVistaHist('downloads')}>⬇️ Downloads</button>
+            <button
+              style={vistaHist === 'sites' ? botaoAtivo : botao}
+              onClick={() => setVistaHist('sites')}
+            >
+              🌐 Sites
+            </button>
+            <button
+              style={vistaHist === 'downloads' ? botaoAtivo : botao}
+              onClick={() => setVistaHist('downloads')}
+            >
+              ⬇️ Downloads
+            </button>
           </div>
 
           {vistaHist === 'sites' && (
             <>
-              <button style={botaoPerigo} onClick={() => {
-                if (historico.length === 0) {
-                  alert('O histórico já está vazio.')
-                } else if (confirm('Apagar todo o histórico?')) {
-                  limparHistorico()
-                  atualizar()
-                }
-              }}>🗑️ Limpar histórico</button>
+              <button
+                style={botaoPerigo}
+                onClick={() => {
+                  if (historico.length === 0) {
+                    alert('O histórico já está vazio.')
+                  } else if (confirm('Apagar todo o histórico?')) {
+                    limparHistorico()
+                    atualizar()
+                  }
+                }}
+              >
+                🗑️ Limpar histórico
+              </button>
 
-              {historico.length === 0 && <p style={{ color: t.suave }}>O histórico está vazio.</p>}
+              {historico.length === 0 && (
+                <p style={{ color: t.suave }}>O histórico está vazio.</p>
+              )}
               <div style={lista}>
                 {historico.map((v) => (
                   <div key={v.url} style={linha}>
@@ -524,10 +920,15 @@ export default function App() {
                         {formatarData(v.data)} · {v.url}
                       </div>
                     </div>
-                    <button style={botaoIcone} onClick={() => {
-                      adicionarFavorito({ titulo: v.titulo, url: v.url })
-                      atualizar()
-                    }}>☆</button>
+                    <button
+                      style={botaoIcone}
+                      onClick={() => {
+                        adicionarFavorito({ titulo: v.titulo, url: v.url })
+                        atualizar()
+                      }}
+                    >
+                      ☆
+                    </button>
                   </div>
                 ))}
               </div>
@@ -536,14 +937,19 @@ export default function App() {
 
           {vistaHist === 'downloads' && (
             <>
-              <button style={botaoPerigo} onClick={() => {
-                if (downloads.length === 0) {
-                  alert('A lista já está vazia.')
-                } else if (confirm('Apagar a lista de downloads? Os ficheiros não são apagados.')) {
-                  limparDownloads()
-                  atualizar()
-                }
-              }}>🗑️ Limpar lista de downloads</button>
+              <button
+                style={botaoPerigo}
+                onClick={() => {
+                  if (downloads.length === 0) {
+                    alert('A lista já está vazia.')
+                  } else if (confirm('Apagar a lista de downloads? Os ficheiros não são apagados.')) {
+                    limparDownloads()
+                    atualizar()
+                  }
+                }}
+              >
+                🗑️ Limpar lista de downloads
+              </button>
 
               {downloads.length === 0 && (
                 <p style={{ color: t.suave }}>
@@ -580,8 +986,11 @@ export default function App() {
           <p style={{ ...rotulo, marginTop: 0 }}>Motor de pesquisa</p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {(['google', 'duckduckgo', 'bing'] as const).map((m) => (
-              <button key={m} style={config.motor === m ? botaoAtivo : botao}
-                onClick={() => mudarConfig({ motor: m })}>
+              <button
+                key={m}
+                style={config.motor === m ? botaoAtivo : botao}
+                onClick={() => mudarConfig({ motor: m })}
+              >
                 {m === 'google' ? 'Google' : m === 'duckduckgo' ? 'DuckDuckGo' : 'Bing'}
               </button>
             ))}
@@ -589,21 +998,33 @@ export default function App() {
 
           <p style={rotulo}>Tema</p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button style={config.tema === 'escuro' ? botaoAtivo : botao}
-              onClick={() => mudarConfig({ tema: 'escuro' })}>🌙 Escuro</button>
-            <button style={config.tema === 'claro' ? botaoAtivo : botao}
-              onClick={() => mudarConfig({ tema: 'claro' })}>☀️ Claro</button>
+            <button
+              style={config.tema === 'escuro' ? botaoAtivo : botao}
+              onClick={() => mudarConfig({ tema: 'escuro' })}
+            >
+              🌙 Escuro
+            </button>
+            <button
+              style={config.tema === 'claro' ? botaoAtivo : botao}
+              onClick={() => mudarConfig({ tema: 'claro' })}
+            >
+              ☀️ Claro
+            </button>
           </div>
 
           <p style={rotulo}>Modo privado</p>
-          <button style={config.privado ? botaoAtivo : botao}
-            onClick={() => mudarConfig({ privado: !config.privado })}>
+          <button
+            style={config.privado ? botaoAtivo : botao}
+            onClick={() => mudarConfig({ privado: !config.privado })}
+          >
             {config.privado ? '🕶️ Ativo: não guarda histórico' : 'Desativado'}
           </button>
 
           <p style={rotulo}>Modo computador</p>
-          <button style={config.computador ? botaoAtivo : botao}
-            onClick={() => mudarConfig({ computador: !config.computador })}>
+          <button
+            style={config.computador ? botaoAtivo : botao}
+            onClick={() => mudarConfig({ computador: !config.computador })}
+          >
             {config.computador ? '🖥️ Ativo' : 'Desativado'}
           </button>
           <p style={nota}>
@@ -612,8 +1033,10 @@ export default function App() {
           </p>
 
           <p style={rotulo}>Cookies</p>
-          <button style={config.cookies ? botaoAtivo : botao}
-            onClick={() => mudarConfig({ cookies: !config.cookies })}>
+          <button
+            style={config.cookies ? botaoAtivo : botao}
+            onClick={() => mudarConfig({ cookies: !config.cookies })}
+          >
             {config.cookies ? '🍪 Guardar cookies' : '🧹 Apagar ao fechar o site'}
           </button>
           <p style={nota}>
@@ -621,8 +1044,10 @@ export default function App() {
           </p>
 
           <p style={rotulo}>Modo seguro (HTTPS)</p>
-          <button style={config.seguro ? botaoAtivo : botao}
-            onClick={() => mudarConfig({ seguro: !config.seguro })}>
+          <button
+            style={config.seguro ? botaoAtivo : botao}
+            onClick={() => mudarConfig({ seguro: !config.seguro })}
+          >
             {config.seguro ? '🔒 Ativo: converte http:// em https://' : 'Desativado'}
           </button>
           <p style={nota}>
@@ -631,27 +1056,58 @@ export default function App() {
           </p>
 
           <p style={rotulo}>Limpeza</p>
-          <button style={botao} onClick={limparDados}>🧽 Limpar cookies e cache</button>
+          <button style={botao} onClick={limparDados}>
+            🧽 Limpar cookies e cache
+          </button>
         </div>
       )}
 
-      <div style={{
-        position: 'fixed', left: 10, right: 10, bottom: 10, display: 'flex', zIndex: 5,
-        backgroundColor: escuro ? 'rgba(10,16,36,0.92)' : 'rgba(255,255,255,0.95)',
-        border: `1px solid ${t.borda}`, borderRadius: 24, backdropFilter: 'blur(8px)',
-      }}>
+      <div
+        style={{
+          position: 'fixed',
+          left: 10,
+          right: 10,
+          bottom: 10,
+          display: 'flex',
+          zIndex: 5,
+          backgroundColor: escuro ? 'rgba(10,16,36,0.92)' : 'rgba(255,255,255,0.95)',
+          border: `1px solid ${t.borda}`,
+          borderRadius: 24,
+          backdropFilter: 'blur(8px)',
+        }}
+      >
         {ABAS.map((a) => (
-          <button key={a.id} onClick={() => { setAba(a.id); atualizar() }} style={{
-            flex: 1, padding: '10px 4px 8px 4px', background: 'none', border: 'none',
-            color: aba === a.id ? '#38BDF8' : t.suave, cursor: 'pointer', fontSize: '0.72rem',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-          }}>
+          <button
+            key={a.id}
+            onClick={() => {
+              setAba(a.id)
+              atualizar()
+            }}
+            style={{
+              flex: 1,
+              padding: '10px 4px 8px 4px',
+              background: 'none',
+              border: 'none',
+              color: aba === a.id ? '#38BDF8' : t.suave,
+              cursor: 'pointer',
+              fontSize: '0.72rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+            }}
+          >
             <Icone nome={a.id} />
             {a.nome}
-            <span style={{
-              height: 3, width: 28, borderRadius: 3, marginTop: 2,
-              background: aba === a.id ? GRAD : 'transparent',
-            }} />
+            <span
+              style={{
+                height: 3,
+                width: 28,
+                borderRadius: 3,
+                marginTop: 2,
+                background: aba === a.id ? GRAD : 'transparent',
+              }}
+            />
           </button>
         ))}
       </div>
