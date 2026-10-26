@@ -1,11 +1,19 @@
 import { Browser } from '@capacitor/browser'
-import { registerPlugin } from '@capacitor/core'
+import { Capacitor, registerPlugin } from '@capacitor/core'
 import { InAppBrowser } from '@capgo/inappbrowser'
-import { lerConfig, registarDownload, registarVisita } from './armazem'
+import {
+  lerConfig,
+  registarDownload,
+  registarVisita,
+} from './armazem'
 
-// Plugin nativo (Java) que copia o ficheiro para a pasta Download do telemóvel
+// Plugin nativo para guardar ficheiros na pasta Download do telemóvel.
 const NexoraDownloads = registerPlugin<{
-  guardar(opcoes: { caminho: string; nome: string; tipo: string }): Promise<{ destino: string }>
+  guardar(opcoes: {
+    caminho: string
+    nome: string
+    tipo: string
+  }): Promise<{ destino: string }>
 }>('NexoraDownloads')
 
 const MOTORES = {
@@ -14,64 +22,93 @@ const MOTORES = {
   bing: 'https://www.bing.com/search?q=',
 }
 
-// Modo computador (aproximação): finge um navegador de PC para o JavaScript
-// da página e força uma largura de ecrã de 1280. Não muda o que o servidor
-// do site vê, por isso alguns sites podem continuar a mostrar a versão móvel.
+// Modo computador: tenta apresentar os sites como num navegador de PC.
 const SCRIPT_PC = `
 (function () {
   var UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
   function definir(obj, nome, valor) {
     try {
-      Object.defineProperty(obj, nome, { get: function () { return valor; }, configurable: true });
+      Object.defineProperty(obj, nome, {
+        get: function () { return valor; },
+        configurable: true
+      });
     } catch (e) {}
   }
+
   definir(navigator, 'userAgent', UA);
   definir(navigator, 'platform', 'Linux x86_64');
   definir(navigator, 'maxTouchPoints', 0);
   definir(navigator, 'userAgentData', undefined);
+
   function viewport() {
     try {
       var m = document.querySelector('meta[name="viewport"]');
+
       if (!m) {
         m = document.createElement('meta');
         m.setAttribute('name', 'viewport');
         (document.head || document.documentElement).appendChild(m);
       }
+
       if (m.getAttribute('content') !== 'width=1280') {
         m.setAttribute('content', 'width=1280');
       }
     } catch (e) {}
   }
+
   viewport();
+
   try {
-    new MutationObserver(viewport).observe(document.documentElement, { childList: true, subtree: true });
+    new MutationObserver(viewport).observe(
+      document.documentElement,
+      { childList: true, subtree: true }
+    );
   } catch (e) {}
 })();
 `
 
+// Converte um endereço ou texto numa URL de destino.
 export function montarUrl(texto: string): string {
   const t = texto.trim()
   if (!t) return ''
+
   const config = lerConfig()
-  const comProtocolo = /^https?:\/\//i.test(t)
+  const comProtocolo = /^https?:\\/\\//i.test(t)
+
   const pareceEndereco =
-    !/\s/.test(t) && (/\.[a-z]{2,}/i.test(t) || /^localhost/i.test(t))
+    !/\\s/.test(t) &&
+    (/\\.[a-z]{2,}/i.test(t) || /^localhost/i.test(t))
 
   if (comProtocolo || pareceEndereco) {
     try {
-      const url = new URL(comProtocolo ? t : 'https://' + t)
-      const local = /^(localhost|\d+\.\d+\.\d+\.\d+)(:|$)/.test(url.host)
-      if (config.seguro && url.protocol === 'http:' && !local) {
+      const url = new URL(
+        comProtocolo ? t : 'https://' + t,
+      )
+
+      const local =
+        /^(localhost|\\d+\\.\\d+\\.\\d+\\.\\d+)(:|$)/.test(
+          url.host,
+        )
+
+      if (
+        config.seguro &&
+        url.protocol === 'http:' &&
+        !local
+      ) {
         url.protocol = 'https:'
       }
+
       return url.href
     } catch {
-      // se não for um endereço válido, cai na pesquisa
+      // Se o endereço for inválido, pesquisar o texto.
     }
   }
+
   return MOTORES[config.motor] + encodeURIComponent(t)
 }
 
+// Limpa cookies e cache do navegador nativo.
 export async function limparCookies(): Promise<void> {
   await InAppBrowser.clearAllCookies()
   await InAppBrowser.clearCache()
@@ -80,87 +117,160 @@ export async function limparCookies(): Promise<void> {
 let ouvintesAtivos = false
 let ultimaUrl = ''
 
+// Regista visitas, respeitando o modo privado.
 function guardarSeNovo(url: string) {
   if (url === ultimaUrl) return
+
   ultimaUrl = url
-  if (!lerConfig().privado) registarVisita(url)
+
+  if (!lerConfig().privado) {
+    registarVisita(url)
+  }
 }
 
+// Evita que uma falha num ouvinte interrompa o navegador.
 async function tentar(acao: () => Promise<unknown>) {
   try {
     await acao()
   } catch {
-    // se um ouvinte falhar, o resto do navegador continua a funcionar
+    // Continua mesmo se o ouvinte não estiver disponível.
   }
 }
 
+// Ativa os eventos disponíveis no navegador Android nativo.
 async function ativarOuvintes() {
   if (ouvintesAtivos) return
+
   ouvintesAtivos = true
 
   await tentar(() =>
-    InAppBrowser.addListener('urlChangeEvent', (e: { url?: string }) => {
-      if (e.url) guardarSeNovo(e.url)
-    }),
+    InAppBrowser.addListener(
+      'urlChangeEvent',
+      (e: { url?: string }) => {
+        if (e.url) guardarSeNovo(e.url)
+      },
+    ),
   )
 
   await tentar(() =>
-    InAppBrowser.addListener('browserPageLoaded', () => {
-      if (lerConfig().computador) {
-        InAppBrowser.executeScript({ code: SCRIPT_PC }).catch(() => {})
-      }
-    }),
+    InAppBrowser.addListener(
+      'browserPageLoaded',
+      () => {
+        if (lerConfig().computador) {
+          InAppBrowser.executeScript({
+            code: SCRIPT_PC,
+          }).catch(() => {})
+        }
+      },
+    ),
   )
 
   await tentar(() =>
-    InAppBrowser.addListener('downloadCompleted', (e) => {
-      const base = {
-        nome: e.fileName,
-        caminho: e.path,
-        tipo: e.mimeType ?? '',
-        origem: e.sourceUrl ?? '',
-        data: Date.now(),
-      }
-      NexoraDownloads.guardar({ caminho: e.path, nome: e.fileName, tipo: base.tipo })
-        .then((r) => registarDownload({ ...base, caminho: r.destino }))
-        .catch((err: unknown) =>
-          registarDownload({ ...base, erro: err instanceof Error ? err.message : String(err) }),
-        )
-    }),
+    InAppBrowser.addListener(
+      'downloadCompleted',
+      (e) => {
+        const base = {
+          nome: e.fileName,
+          caminho: e.path,
+          tipo: e.mimeType ?? '',
+          origem: e.sourceUrl ?? '',
+          data: Date.now(),
+        }
+
+        NexoraDownloads.guardar({
+          caminho: e.path,
+          nome: e.fileName,
+          tipo: base.tipo,
+        })
+          .then((r) =>
+            registarDownload({
+              ...base,
+              caminho: r.destino,
+            }),
+          )
+          .catch((err: unknown) =>
+            registarDownload({
+              ...base,
+              erro:
+                err instanceof Error
+                  ? err.message
+                  : String(err),
+            }),
+          )
+      },
+    ),
   )
 
   await tentar(() =>
-    InAppBrowser.addListener('downloadFailed', (e) => {
-      registarDownload({
-        nome: e.fileName ?? 'Ficheiro',
-        caminho: '',
-        tipo: e.mimeType ?? '',
-        origem: e.sourceUrl ?? '',
-        data: Date.now(),
-        erro: e.error,
-      })
-      // Plano B: o Chrome (navegador do sistema) descarrega o mesmo link
-      if (e.sourceUrl && /^https?:\/\//i.test(e.sourceUrl)) {
-        Browser.open({ url: e.sourceUrl }).catch(() => {})
-      }
-    }),
+    InAppBrowser.addListener(
+      'downloadFailed',
+      (e) => {
+        registarDownload({
+          nome: e.fileName ?? 'Ficheiro',
+          caminho: '',
+          tipo: e.mimeType ?? '',
+          origem: e.sourceUrl ?? '',
+          data: Date.now(),
+          erro: e.error,
+        })
+
+        // Plano alternativo: descarregar no navegador do sistema.
+        if (
+          e.sourceUrl &&
+          /^https?:\\/\\//i.test(e.sourceUrl)
+        ) {
+          Browser.open({
+            url: e.sourceUrl,
+          }).catch(() => {})
+        }
+      },
+    ),
   )
 
   await tentar(() =>
-    InAppBrowser.addListener('closeEvent', () => {
-      if (!lerConfig().cookies) limparCookies().catch(() => {})
-    }),
+    InAppBrowser.addListener(
+      'closeEvent',
+      () => {
+        if (!lerConfig().cookies) {
+          limparCookies().catch(() => {})
+        }
+      },
+    ),
   )
 }
 
+// Abre endereços tanto na versão web como no APK.
 export async function abrir(texto: string) {
   const url = montarUrl(texto)
   if (!url) return
+
+  // Na versão web, abre o destino num novo separador.
+  if (!Capacitor.isNativePlatform()) {
+    guardarSeNovo(url)
+
+    const separador = window.open(
+      url,
+      '_blank',
+      'noopener,noreferrer',
+    )
+
+    // Se o navegador bloquear o novo separador,
+    // tenta abrir o endereço na janela atual.
+    if (!separador) {
+      window.location.assign(url)
+    }
+
+    return
+  }
+
+  // No APK, mantém a navegação nativa existente.
   await ativarOuvintes()
+
   ultimaUrl = ''
   guardarSeNovo(url)
 
   const pc = lerConfig().computador
+
   await InAppBrowser.openWebView({
     url,
     handleDownloads: true,
@@ -169,7 +279,8 @@ export async function abrir(texto: string) {
           enableZoom: true,
           isPresentAfterPageLoad: true,
           preShowScript: SCRIPT_PC,
-          preShowScriptInjectionTime: 'documentStart' as const,
+          preShowScriptInjectionTime:
+            'documentStart' as const,
         }
       : {}),
   })
