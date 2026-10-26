@@ -7,7 +7,7 @@ import {
   registarVisita,
 } from './armazem'
 
-// Plugin nativo para guardar ficheiros na pasta Download do telemóvel.
+// Plugin nativo para guardar ficheiros na pasta Download.
 const NexoraDownloads = registerPlugin<{
   guardar(opcoes: {
     caminho: string
@@ -22,7 +22,7 @@ const MOTORES = {
   bing: 'https://www.bing.com/search?q=',
 }
 
-// Modo computador: tenta apresentar os sites como num navegador de PC.
+// Modo computador para o navegador Android nativo.
 const SCRIPT_PC = `
 (function () {
   var UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -68,17 +68,17 @@ const SCRIPT_PC = `
 })();
 `
 
-// Converte um endereço ou texto numa URL de destino.
+// Converte um endereço ou texto numa URL.
 export function montarUrl(texto: string): string {
   const t = texto.trim()
   if (!t) return ''
 
   const config = lerConfig()
-  const comProtocolo = /^https?:\\/\\//i.test(t)
+  const comProtocolo = /^https?:\/\//i.test(t)
 
   const pareceEndereco =
-    !/\\s/.test(t) &&
-    (/\\.[a-z]{2,}/i.test(t) || /^localhost/i.test(t))
+    !/\s/.test(t) &&
+    (/\.[a-z]{2,}/i.test(t) || /^localhost/i.test(t))
 
   if (comProtocolo || pareceEndereco) {
     try {
@@ -87,9 +87,7 @@ export function montarUrl(texto: string): string {
       )
 
       const local =
-        /^(localhost|\\d+\\.\\d+\\.\\d+\\.\\d+)(:|$)/.test(
-          url.host,
-        )
+        /^(localhost|\d+\.\d+\.\d+\.\d+)(:|$)/.test(url.host)
 
       if (
         config.seguro &&
@@ -108,7 +106,7 @@ export function montarUrl(texto: string): string {
   return MOTORES[config.motor] + encodeURIComponent(t)
 }
 
-// Limpa cookies e cache do navegador nativo.
+// Limpa os cookies e a cache do navegador nativo.
 export async function limparCookies(): Promise<void> {
   await InAppBrowser.clearAllCookies()
   await InAppBrowser.clearCache()
@@ -128,16 +126,16 @@ function guardarSeNovo(url: string) {
   }
 }
 
-// Evita que uma falha num ouvinte interrompa o navegador.
+// Impede que falhas nos ouvintes interrompam o navegador.
 async function tentar(acao: () => Promise<unknown>) {
   try {
     await acao()
   } catch {
-    // Continua mesmo se o ouvinte não estiver disponível.
+    // Continua mesmo se um ouvinte falhar.
   }
 }
 
-// Ativa os eventos disponíveis no navegador Android nativo.
+// Ativa os eventos do navegador Android nativo.
 async function ativarOuvintes() {
   if (ouvintesAtivos) return
 
@@ -214,10 +212,10 @@ async function ativarOuvintes() {
           erro: e.error,
         })
 
-        // Plano alternativo: descarregar no navegador do sistema.
+        // Alternativa: abrir o download no navegador do sistema.
         if (
           e.sourceUrl &&
-          /^https?:\\/\\//i.test(e.sourceUrl)
+          /^https?:\/\//i.test(e.sourceUrl)
         ) {
           Browser.open({
             url: e.sourceUrl,
@@ -239,12 +237,12 @@ async function ativarOuvintes() {
   )
 }
 
-// Abre endereços tanto na versão web como no APK.
+// Abre endereços na versão web e no APK.
 export async function abrir(texto: string) {
   const url = montarUrl(texto)
   if (!url) return
 
-  // Na versão web, abre o destino num novo separador.
+  // Versão web: abrir num novo separador.
   if (!Capacitor.isNativePlatform()) {
     guardarSeNovo(url)
 
@@ -254,8 +252,7 @@ export async function abrir(texto: string) {
       'noopener,noreferrer',
     )
 
-    // Se o navegador bloquear o novo separador,
-    // tenta abrir o endereço na janela atual.
+    // Se o navegador bloquear a abertura, usar a janela atual.
     if (!separador) {
       window.location.assign(url)
     }
@@ -263,7 +260,7 @@ export async function abrir(texto: string) {
     return
   }
 
-  // No APK, mantém a navegação nativa existente.
+  // APK Android: preservar a navegação nativa.
   await ativarOuvintes()
 
   ultimaUrl = ''
@@ -279,8 +276,7 @@ export async function abrir(texto: string) {
           enableZoom: true,
           isPresentAfterPageLoad: true,
           preShowScript: SCRIPT_PC,
-          preShowScriptInjectionTime:
-            'documentStart' as const,
+          preShowScriptInjectionTime: 'documentStart' as const,
         }
       : {}),
   })
