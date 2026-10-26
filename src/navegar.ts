@@ -239,11 +239,28 @@ async function ativarOuvintes() {
 
 // Abre endereços na versão web e no APK.
 export async function abrir(texto: string) {
-  const url = montarUrl(texto)
-  if (!url) return
+  const urlBase = montarUrl(texto)
+  if (!urlBase) return
 
-  // Versão web: abrir num novo separador.
+  let url = urlBase
+
+  // Na versão web, usar o YouTube móvel.
   if (!Capacitor.isNativePlatform()) {
+    try {
+      const destino = new URL(urlBase)
+
+      if (
+        ['youtube.com', 'www.youtube.com'].includes(
+          destino.hostname.toLowerCase(),
+        )
+      ) {
+        destino.hostname = 'm.youtube.com'
+        url = destino.href
+      }
+    } catch {
+      // Mantém a URL original se não for válida.
+    }
+
     guardarSeNovo(url)
 
     const separador = window.open(
@@ -252,7 +269,7 @@ export async function abrir(texto: string) {
       'noopener,noreferrer',
     )
 
-    // Se o navegador bloquear a abertura, usar a janela atual.
+    // Se o navegador bloquear o separador, usar a janela atual.
     if (!separador) {
       window.location.assign(url)
     }
@@ -260,7 +277,7 @@ export async function abrir(texto: string) {
     return
   }
 
-  // APK Android: preservar a navegação nativa.
+  // No APK, manter a navegação nativa existente.
   await ativarOuvintes()
 
   ultimaUrl = ''
