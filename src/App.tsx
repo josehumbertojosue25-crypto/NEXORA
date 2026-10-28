@@ -29,7 +29,8 @@ const FUNDO_CLARO = '/FUNDO_CLARO.png'
 type Aba = 'inicio' | 'favoritos' | 'historico' | 'definicoes'
 type VistaHistorico = 'sites' | 'downloads'
 
-const GRAD = 'linear-gradient(135deg, #22D3EE, #3B82F6 50%, #8B5CF6)'
+const GRAD =
+  'linear-gradient(135deg, #38BDF8 0%, #2563EB 48%, #6366F1 100%)'
 
 const TEXTO_GRAD: React.CSSProperties = {
   background: GRAD,
@@ -38,33 +39,61 @@ const TEXTO_GRAD: React.CSSProperties = {
 }
 
 const ANIMACOES = `
-@keyframes nx-entrar { from { opacity: 0; transform: scale(0.4) rotate(-12deg); } to { opacity: 1; transform: scale(1) rotate(0deg); } }
-@keyframes nx-subir { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes nx-onda { 0% { transform: scale(0.8); opacity: 0.7; } 100% { transform: scale(2); opacity: 0; } }
-@keyframes nx-carregar { from { width: 0%; } to { width: 100%; } }
-@keyframes nx-flutuar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes nx-entrar {
+  from { opacity: 0; transform: scale(0.4) rotate(-12deg); }
+  to { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes nx-subir {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes nx-onda {
+  0% { transform: scale(0.8); opacity: 0.7; }
+  100% { transform: scale(2); opacity: 0; }
+}
+@keyframes nx-carregar {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+@keyframes nx-flutuar {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes nx-brilho {
+  0%, 100% { box-shadow: 0 0 12px rgba(56,189,248,0.08); }
+  50% { box-shadow: 0 0 24px rgba(56,189,248,0.2); }
+}
+* {
+  box-sizing: border-box;
+}
+button, input {
+  font-family: inherit;
+}
+button {
+  -webkit-tap-highlight-color: transparent;
+}
 `
 
 const TEMAS = {
   escuro: {
-    fundo: '#050816',
-    texto: '#F3F4F6',
-    suave: '#94A3B8',
-    cartao: 'rgba(15,23,42,0.75)',
-    borda: 'rgba(96,165,250,0.35)',
-    botao: 'rgba(30,41,59,0.8)',
-    botaoBorda: 'rgba(99,102,241,0.45)',
-    botaoTexto: '#E2E8F0',
+    fundo: '#050B18',
+    texto: '#EAF2FF',
+    suave: '#91A4C7',
+    cartao: 'rgba(12, 25, 48, 0.88)',
+    borda: 'rgba(56, 189, 248, 0.22)',
+    botao: 'rgba(17, 34, 62, 0.92)',
+    botaoBorda: 'rgba(59, 130, 246, 0.35)',
+    botaoTexto: '#DCEBFF',
   },
   claro: {
-    fundo: '#F1F5F9',
-    texto: '#0F172A',
-    suave: '#475569',
-    cartao: 'rgba(255,255,255,0.85)',
-    borda: 'rgba(148,163,184,0.5)',
-    botao: 'rgba(226,232,240,0.9)',
-    botaoBorda: '#CBD5E1',
-    botaoTexto: '#334155',
+    fundo: '#F3F7FF',
+    texto: '#10213D',
+    suave: '#607493',
+    cartao: 'rgba(255, 255, 255, 0.94)',
+    borda: 'rgba(37, 99, 235, 0.16)',
+    botao: 'rgba(231, 240, 255, 0.96)',
+    botaoBorda: 'rgba(37, 99, 235, 0.22)',
+    botaoTexto: '#18345D',
   },
 }
 
@@ -84,10 +113,7 @@ function formatarData(ms: number): string {
   })
 }
 
-/**
- * Carrega o anúncio apenas na versão web.
- * Na aplicação Android, o AdMob continua a ser utilizado.
- */
+/** Carrega o AdSense apenas no website. */
 function AnuncioAdSense() {
   const anuncioRef = useRef<HTMLModElement>(null)
 
@@ -134,15 +160,39 @@ function AnuncioAdSense() {
 
 function Icone({ nome, tamanho = 24 }: { nome: string; tamanho?: number }) {
   const caminhos: Record<string, React.ReactNode> = {
-    inicio: <path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
-    favoritos: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />,
-    historico: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
-    definicoes: <><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" /></>,
+    inicio: (
+      <path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />
+    ),
+    favoritos: (
+      <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />
+    ),
+    historico: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </>
+    ),
+    definicoes: (
+      <>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" />
+      </>
+    ),
     menu: <path d="M4 7h16M4 12h16M4 17h16" />,
-    lupa: <><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></>,
+    lupa: (
+      <>
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-4-4" />
+      </>
+    ),
     seta: <path d="M5 12h14M13 6l6 6-6 6" />,
     escudo: <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />,
-    cadeado: <><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
+    cadeado: (
+      <>
+        <rect x="5" y="11" width="14" height="10" rx="2" />
+        <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+      </>
+    ),
     raio: <path d="M13 2L4 14h7l-1 8 9-12h-7z" />,
     direita: <path d="M9 6l6 6-6 6" />,
   }
@@ -157,6 +207,7 @@ function Icone({ nome, tamanho = 24 }: { nome: string; tamanho?: number }) {
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
+      aria-hidden="true"
     >
       {caminhos[nome]}
     </svg>
@@ -184,7 +235,16 @@ function CartaoSite({
   }
 
   return (
-    <button onClick={aoTocar} style={estilo}>
+    <button
+      type="button"
+      onClick={aoTocar}
+      style={{
+        ...estilo,
+        minWidth: 0,
+        overflow: 'hidden',
+        wordBreak: 'break-word',
+      }}
+    >
       {host && !falhou ? (
         <img
           src={`https://icons.duckduckgo.com/ip3/${host}.ico`}
@@ -192,20 +252,26 @@ function CartaoSite({
           height={36}
           alt=""
           onError={() => setFalhou(true)}
-          style={{ borderRadius: 8 }}
+          style={{
+            borderRadius: 10,
+            objectFit: 'contain',
+            background: '#FFFFFF',
+          }}
         />
       ) : (
         <span
           style={{
             width: 36,
             height: 36,
-            borderRadius: 10,
+            flexShrink: 0,
+            borderRadius: 11,
             background: GRAD,
             color: '#fff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: 'bold',
+            boxShadow: '0 4px 14px rgba(37,99,235,0.25)',
           }}
         >
           {titulo.charAt(0).toUpperCase()}
@@ -218,14 +284,17 @@ function CartaoSite({
 
 function Foguete() {
   return (
-    <svg viewBox="0 0 64 64" width="52" height="52">
+    <svg viewBox="0 0 64 64" width="52" height="52" aria-hidden="true">
       <defs>
         <linearGradient id="gf" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#22D3EE" />
-          <stop offset="1" stopColor="#8B5CF6" />
+          <stop offset="0" stopColor="#38BDF8" />
+          <stop offset="1" stopColor="#6366F1" />
         </linearGradient>
       </defs>
-      <path d="M32 6c9 7 13 17 11 30l-6 6H27l-6-6C19 23 23 13 32 6z" fill="url(#gf)" />
+      <path
+        d="M32 6c9 7 13 17 11 30l-6 6H27l-6-6C19 23 23 13 32 6z"
+        fill="url(#gf)"
+      />
       <circle cx="32" cy="24" r="5" fill="#0B1020" />
       <path d="M21 36l-8 8 9-1zM43 36l8 8-9-1z" fill="#6366F1" />
       <path d="M28 46c0 6 2 10 4 12 2-2 4-6 4-12z" fill="#F59E0B" />
@@ -259,8 +328,8 @@ function Abertura({ aoTerminar }: { aoTerminar: () => void }) {
         position: 'fixed',
         inset: 0,
         zIndex: 100,
-        backgroundColor: '#050816',
-        backgroundImage: `linear-gradient(rgba(5,8,22,0.5), rgba(5,8,22,0.8)), url(${FUNDO})`,
+        backgroundColor: '#050B18',
+        backgroundImage: `linear-gradient(rgba(5,11,24,0.45), rgba(5,11,24,0.88)), url(${FUNDO})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center top',
         display: 'flex',
@@ -294,7 +363,8 @@ function Abertura({ aoTerminar }: { aoTerminar: () => void }) {
           stroke="#38BDF8"
           strokeWidth="1.6"
           strokeLinejoin="round"
-          style={{ filter: 'drop-shadow(0 0 10px rgba(56,189,248,0.8))' }}
+          style={{ filter: 'drop-shadow(0 0 12px rgba(56,189,248,0.8))' }}
+          aria-hidden="true"
         >
           <path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z" />
         </svg>
@@ -317,7 +387,7 @@ function Abertura({ aoTerminar }: { aoTerminar: () => void }) {
       <div
         style={{
           marginTop: 8,
-          color: '#94A3B8',
+          color: '#91A4C7',
           fontSize: '0.95rem',
           animation: 'nx-subir 0.8s ease 0.8s both',
         }}
@@ -360,14 +430,11 @@ export default function App() {
   const [abertura, setAbertura] = useState(true)
   const campo = useRef<HTMLInputElement>(null)
 
-  // AdSense: carrega o script apenas na versão web.
+  // O AdSense só é carregado no website.
   useEffect(() => {
     if (Capacitor.isNativePlatform()) return
 
-    const existente = document.querySelector(
-      'script[data-nexora-adsense]',
-    )
-
+    const existente = document.querySelector('script[data-nexora-adsense]')
     if (existente) return
 
     const script = document.createElement('script')
@@ -384,7 +451,7 @@ export default function App() {
     document.head.appendChild(script)
   }, [])
 
-  // AdMob: mantém o banner nativo do Android.
+  // O AdMob é utilizado apenas na aplicação Android.
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
 
@@ -489,69 +556,77 @@ export default function App() {
       : { animation: `nx-subir 0.7s ease ${atraso}s both` }
 
   const botao: React.CSSProperties = {
-    padding: '8px 16px',
+    padding: '9px 16px',
     backgroundColor: t.botao,
     border: `1px solid ${t.botaoBorda}`,
-    borderRadius: '10px',
+    borderRadius: 12,
     color: t.botaoTexto,
     cursor: 'pointer',
     fontSize: '0.85rem',
+    transition: 'transform 0.2s ease, border-color 0.2s ease',
   }
 
   const botaoAtivo: React.CSSProperties = {
     ...botao,
     background: GRAD,
-    color: '#FFF',
-    border: 'none',
+    color: '#FFFFFF',
+    border: '1px solid rgba(125,211,252,0.4)',
+    boxShadow: '0 5px 18px rgba(37,99,235,0.22)',
   }
 
   const cartaoAtalho: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 8,
-    padding: '14px 4px',
+    justifyContent: 'center',
+    gap: 9,
+    padding: '15px 5px',
     backgroundColor: t.botao,
     border: `1px solid ${t.botaoBorda}`,
-    borderRadius: 16,
+    borderRadius: 17,
     color: t.texto,
     cursor: 'pointer',
+    minWidth: 0,
+    animation: 'nx-brilho 4s ease-in-out infinite',
   }
 
   const linha: React.CSSProperties = {
     backgroundColor: t.cartao,
     border: `1px solid ${t.borda}`,
-    borderRadius: '14px',
-    padding: '12px 14px',
+    borderRadius: 15,
+    padding: '13px 14px',
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
+    gap: 10,
+    boxShadow: escuro ? '0 5px 18px rgba(0,0,0,0.08)' : '0 5px 18px rgba(37,99,235,0.04)',
   }
 
   const titulo: React.CSSProperties = {
-    fontSize: '1.2rem',
-    fontWeight: 'bold',
-    margin: '0 0 14px 0',
+    fontSize: '1.25rem',
+    fontWeight: 800,
+    margin: '0 0 16px 0',
     color: t.texto,
+    letterSpacing: '-0.3px',
   }
 
   const rotulo: React.CSSProperties = {
     color: t.suave,
     fontSize: '0.85rem',
-    margin: '18px 0 8px 0',
+    margin: '20px 0 9px 0',
+    fontWeight: 600,
   }
 
   const nota: React.CSSProperties = {
     color: t.suave,
     fontSize: '0.75rem',
-    margin: '6px 0 0 0',
-    lineHeight: 1.4,
+    margin: '7px 0 0 0',
+    lineHeight: 1.5,
   }
 
   const lista: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: 9,
     width: '100%',
   }
 
@@ -569,12 +644,13 @@ export default function App() {
   }
 
   const botaoIcone: React.CSSProperties = {
-    background: 'none',
+    background: 'transparent',
     border: 'none',
     color: t.suave,
     fontSize: '1.1rem',
     cursor: 'pointer',
-    padding: '4px 8px',
+    padding: '6px 8px',
+    borderRadius: 8,
   }
 
   const botaoPerigo: React.CSSProperties = {
@@ -582,12 +658,13 @@ export default function App() {
     width: '100%',
     padding: '12px 16px',
     marginBottom: 14,
-    border: '1px solid rgba(248,113,113,0.6)',
+    border: '1px solid rgba(248,113,113,0.45)',
     color: escuro ? '#FCA5A5' : '#B91C1C',
+    backgroundColor: escuro ? 'rgba(127,29,29,0.14)' : 'rgba(254,226,226,0.7)',
   }
 
-  const corVeu = escuro ? '5,8,22' : '241,245,249'
-  const veu = aba === 'inicio' ? 0.1 : escuro ? 0.65 : 0.45
+  const corVeu = escuro ? '5,11,24' : '243,247,255'
+  const veu = aba === 'inicio' ? 0.12 : escuro ? 0.72 : 0.55
   const imagemFundo = escuro ? FUNDO : FUNDO_CLARO
 
   const estiloFundo: React.CSSProperties = {
@@ -596,6 +673,7 @@ export default function App() {
     backgroundSize: 'cover',
     backgroundPosition: 'center top',
     backgroundRepeat: 'no-repeat',
+    backgroundAttachment: 'fixed',
   }
 
   return (
@@ -606,8 +684,8 @@ export default function App() {
         ...estiloFundo,
         color: t.texto,
         minHeight: '100vh',
-        fontFamily: 'sans-serif',
-        padding: '20px 18px 110px 18px',
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        padding: '22px 18px 112px',
         boxSizing: 'border-box',
         textAlign: 'left',
       }}
@@ -617,45 +695,50 @@ export default function App() {
       {abertura && <Abertura aoTerminar={terminarAbertura} />}
 
       {aba === 'inicio' && (
-        <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 760, margin: '0 auto' }}>
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
+              gap: 12,
               ...entrada(0),
             }}
           >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                 <svg
-                  width="34"
-                  height="34"
+                  width="36"
+                  height="36"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="#38BDF8"
                   strokeWidth="1.8"
                   strokeLinejoin="round"
+                  aria-hidden="true"
                 >
                   <path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z" />
                 </svg>
                 <span
                   style={{
-                    fontSize: '1.9rem',
-                    fontWeight: 800,
+                    fontSize: 'clamp(1.55rem, 6vw, 1.95rem)',
+                    fontWeight: 900,
                     fontStyle: 'italic',
+                    letterSpacing: '-0.8px',
                     ...TEXTO_GRAD,
                   }}
                 >
                   NEXORA JH
                 </span>
               </div>
-              <p style={{ color: t.suave, fontSize: '0.9rem', margin: '6px 0 0 0' }}>
+              <p style={{ color: t.suave, fontSize: '0.85rem', margin: '7px 0 0 0' }}>
                 {config.privado ? '🕶️ Modo privado ativo' : 'O teu navegador moderno e seguro'}
               </p>
             </div>
 
             <button
+              type="button"
+              aria-label="Abrir definições"
               onClick={() => setAba('definicoes')}
               style={{
                 ...botaoIcone,
@@ -663,6 +746,8 @@ export default function App() {
                 borderRadius: 14,
                 padding: 12,
                 color: t.texto,
+                backgroundColor: t.cartao,
+                flexShrink: 0,
               }}
             >
               <Icone nome="menu" />
@@ -671,10 +756,12 @@ export default function App() {
 
           <h2
             style={{
-              fontSize: '1.7rem',
-              lineHeight: 1.25,
-              margin: '70px 0 18px 0',
-              maxWidth: '62%',
+              fontSize: 'clamp(1.6rem, 6vw, 2.15rem)',
+              lineHeight: 1.2,
+              margin: '58px 0 18px',
+              maxWidth: 430,
+              fontWeight: 850,
+              letterSpacing: '-0.8px',
               ...TEXTO_GRAD,
               ...entrada(0.1),
             }}
@@ -685,26 +772,34 @@ export default function App() {
           <div
             style={{
               display: 'flex',
-              gap: 14,
+              gap: 15,
               color: t.suave,
               fontSize: '0.78rem',
               flexWrap: 'wrap',
-              marginBottom: 28,
+              marginBottom: 25,
               ...entrada(0.2),
             }}
           >
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <Icone nome="escudo" tamanho={18} /> Rápido
+              <Icone nome="escudo" tamanho={17} /> Rápido
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <Icone nome="cadeado" tamanho={18} /> Seguro
+              <Icone nome="cadeado" tamanho={17} /> Seguro
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <Icone nome="raio" tamanho={18} /> Confiável
+              <Icone nome="raio" tamanho={17} /> Confiável
             </span>
           </div>
 
-          <div style={{ padding: 2, borderRadius: 999, background: GRAD, ...entrada(0.3) }}>
+          <div
+            style={{
+              padding: 2,
+              borderRadius: 999,
+              background: GRAD,
+              boxShadow: '0 8px 28px rgba(37,99,235,0.16)',
+              ...entrada(0.3),
+            }}
+          >
             <form
               onSubmit={handleSearch}
               style={{
@@ -712,11 +807,11 @@ export default function App() {
                 alignItems: 'center',
                 gap: 8,
                 borderRadius: 999,
-                background: escuro ? '#0A1024' : '#FFFFFF',
+                background: escuro ? '#081326' : '#FFFFFF',
                 padding: '4px 4px 4px 16px',
               }}
             >
-              <span style={{ color: t.suave, display: 'flex' }}>
+              <span style={{ color: '#38BDF8', display: 'flex', flexShrink: 0 }}>
                 <Icone nome="lupa" />
               </span>
               <input
@@ -731,22 +826,25 @@ export default function App() {
                 spellCheck={false}
                 inputMode="url"
                 enterKeyHint="go"
+                aria-label="Pesquisar ou escrever endereço"
                 style={{
                   flex: 1,
                   minWidth: 0,
-                  padding: '12px 4px',
+                  padding: '13px 4px',
                   border: 'none',
                   background: 'transparent',
-                  color: t.texto,
+                  color: escuro ? '#EAF2FF' : '#10213D',
                   outline: 'none',
-                  fontSize: '1rem',
+                  fontSize: '0.94rem',
                 }}
               />
               <button
                 type="submit"
+                aria-label="Pesquisar"
                 style={{
                   width: 48,
                   height: 48,
+                  flexShrink: 0,
                   borderRadius: '50%',
                   border: 'none',
                   background: GRAD,
@@ -763,7 +861,11 @@ export default function App() {
           </div>
 
           {texto.trim() && (
-            <button onClick={guardarFavoritoDoTexto} style={{ ...botao, marginTop: 12 }}>
+            <button
+              type="button"
+              onClick={guardarFavoritoDoTexto}
+              style={{ ...botao, marginTop: 12 }}
+            >
               ☆ Guardar nos favoritos
             </button>
           )}
@@ -771,7 +873,7 @@ export default function App() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
               gap: 10,
               marginTop: 26,
               ...entrada(0.4),
@@ -788,7 +890,6 @@ export default function App() {
             ))}
           </div>
 
-          {/* Google AdSense: aparece apenas na versão web. */}
           <AnuncioAdSense />
 
           {maisVisitados.length > 0 && (
@@ -798,7 +899,12 @@ export default function App() {
               </p>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {maisVisitados.map((v) => (
-                  <button key={v.url} onClick={() => ir(v.url)} style={botao}>
+                  <button
+                    type="button"
+                    key={v.url}
+                    onClick={() => ir(v.url)}
+                    style={botao}
+                  >
                     {v.titulo}
                   </button>
                 ))}
@@ -808,6 +914,7 @@ export default function App() {
 
           <div style={entrada(0.6)}>
             <button
+              type="button"
               onClick={() => campo.current?.focus()}
               style={{
                 width: '100%',
@@ -815,23 +922,24 @@ export default function App() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 14,
-                padding: '14px 16px',
+                padding: '15px 16px',
                 borderRadius: 20,
                 textAlign: 'left',
                 cursor: 'pointer',
                 backgroundColor: t.cartao,
                 border: `1px solid ${t.borda}`,
                 color: t.texto,
+                boxShadow: escuro ? '0 10px 30px rgba(0,0,0,0.12)' : '0 10px 30px rgba(37,99,235,0.05)',
               }}
             >
               <span style={{ display: 'inline-flex', animation: 'nx-flutuar 3s ease-in-out infinite' }}>
                 <Foguete />
               </span>
-              <span style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontWeight: 'bold', fontSize: '1.05rem' }}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontWeight: 800, fontSize: '1.02rem' }}>
                   Navegação sem limites
                 </span>
-                <span style={{ display: 'block', color: t.suave, fontSize: '0.85rem', marginTop: 4 }}>
+                <span style={{ display: 'block', color: t.suave, fontSize: '0.83rem', marginTop: 5, lineHeight: 1.5 }}>
                   Descobre, pesquisa, aprende e evolui cada dia mais.
                 </span>
               </span>
@@ -844,7 +952,7 @@ export default function App() {
       )}
 
       {aba === 'favoritos' && (
-        <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 760, margin: '0 auto' }}>
           <h2 style={titulo}>⭐ Favoritos</h2>
           {favoritos.length === 0 && (
             <p style={{ color: t.suave }}>Ainda não tens favoritos.</p>
@@ -853,12 +961,14 @@ export default function App() {
             {favoritos.map((f) => (
               <div key={f.url} style={linha}>
                 <div style={textoLinha} onClick={() => ir(f.url)}>
-                  <div style={{ fontWeight: 'bold', ...cortar }}>{f.titulo}</div>
-                  <div style={{ color: t.suave, fontSize: '0.75rem', ...cortar }}>
+                  <div style={{ fontWeight: 750, ...cortar }}>{f.titulo}</div>
+                  <div style={{ color: t.suave, fontSize: '0.75rem', marginTop: 4, ...cortar }}>
                     {f.url}
                   </div>
                 </div>
                 <button
+                  type="button"
+                  aria-label={`Remover ${f.titulo} dos favoritos`}
                   style={botaoIcone}
                   onClick={() => {
                     removerFavorito(f.url)
@@ -874,17 +984,19 @@ export default function App() {
       )}
 
       {aba === 'historico' && (
-        <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 760, margin: '0 auto' }}>
           <h2 style={titulo}>🕘 Histórico</h2>
 
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
             <button
+              type="button"
               style={vistaHist === 'sites' ? botaoAtivo : botao}
               onClick={() => setVistaHist('sites')}
             >
               🌐 Sites
             </button>
             <button
+              type="button"
               style={vistaHist === 'downloads' ? botaoAtivo : botao}
               onClick={() => setVistaHist('downloads')}
             >
@@ -895,6 +1007,7 @@ export default function App() {
           {vistaHist === 'sites' && (
             <>
               <button
+                type="button"
                 style={botaoPerigo}
                 onClick={() => {
                   if (historico.length === 0) {
@@ -911,16 +1024,19 @@ export default function App() {
               {historico.length === 0 && (
                 <p style={{ color: t.suave }}>O histórico está vazio.</p>
               )}
+
               <div style={lista}>
                 {historico.map((v) => (
                   <div key={v.url} style={linha}>
                     <div style={textoLinha} onClick={() => ir(v.url)}>
-                      <div style={{ fontWeight: 'bold', ...cortar }}>{v.titulo}</div>
-                      <div style={{ color: t.suave, fontSize: '0.75rem', ...cortar }}>
+                      <div style={{ fontWeight: 750, ...cortar }}>{v.titulo}</div>
+                      <div style={{ color: t.suave, fontSize: '0.75rem', marginTop: 4, ...cortar }}>
                         {formatarData(v.data)} · {v.url}
                       </div>
                     </div>
                     <button
+                      type="button"
+                      aria-label={`Guardar ${v.titulo} nos favoritos`}
                       style={botaoIcone}
                       onClick={() => {
                         adicionarFavorito({ titulo: v.titulo, url: v.url })
@@ -938,6 +1054,7 @@ export default function App() {
           {vistaHist === 'downloads' && (
             <>
               <button
+                type="button"
                 style={botaoPerigo}
                 onClick={() => {
                   if (downloads.length === 0) {
@@ -956,20 +1073,22 @@ export default function App() {
                   Ainda não há downloads. Toque num link de ficheiro dentro de um site.
                 </p>
               )}
+
               <div style={lista}>
                 {downloads.map((d, i) => (
                   <div key={d.data + '-' + i} style={linha}>
                     <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                      <div style={{ fontWeight: 'bold', ...cortar }}>
+                      <div style={{ fontWeight: 750, ...cortar }}>
                         {d.erro ? '⚠️ ' : '✅ '}{d.nome}
                       </div>
-                      <div style={{ color: t.suave, fontSize: '0.75rem', ...cortar }}>
+                      <div style={{ color: t.suave, fontSize: '0.75rem', marginTop: 4, ...cortar }}>
                         {formatarData(d.data)} · {d.erro ? 'Falhou: ' + d.erro : d.tipo || 'ficheiro'}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+
               <p style={nota}>
                 Os ficheiros abrem no visualizador do Android depois de baixados. Se quiser
                 guardá-los, use o botão de guardar ou partilhar desse visualizador.
@@ -980,13 +1099,14 @@ export default function App() {
       )}
 
       {aba === 'definicoes' && (
-        <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 760, margin: '0 auto' }}>
           <h2 style={titulo}>⚙️ Definições</h2>
 
           <p style={{ ...rotulo, marginTop: 0 }}>Motor de pesquisa</p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {(['google', 'duckduckgo', 'bing'] as const).map((m) => (
               <button
+                type="button"
                 key={m}
                 style={config.motor === m ? botaoAtivo : botao}
                 onClick={() => mudarConfig({ motor: m })}
@@ -999,12 +1119,14 @@ export default function App() {
           <p style={rotulo}>Tema</p>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
+              type="button"
               style={config.tema === 'escuro' ? botaoAtivo : botao}
               onClick={() => mudarConfig({ tema: 'escuro' })}
             >
               🌙 Escuro
             </button>
             <button
+              type="button"
               style={config.tema === 'claro' ? botaoAtivo : botao}
               onClick={() => mudarConfig({ tema: 'claro' })}
             >
@@ -1014,6 +1136,7 @@ export default function App() {
 
           <p style={rotulo}>Modo privado</p>
           <button
+            type="button"
             style={config.privado ? botaoAtivo : botao}
             onClick={() => mudarConfig({ privado: !config.privado })}
           >
@@ -1022,6 +1145,7 @@ export default function App() {
 
           <p style={rotulo}>Modo computador</p>
           <button
+            type="button"
             style={config.computador ? botaoAtivo : botao}
             onClick={() => mudarConfig({ computador: !config.computador })}
           >
@@ -1034,6 +1158,7 @@ export default function App() {
 
           <p style={rotulo}>Cookies</p>
           <button
+            type="button"
             style={config.cookies ? botaoAtivo : botao}
             onClick={() => mudarConfig({ cookies: !config.cookies })}
           >
@@ -1045,6 +1170,7 @@ export default function App() {
 
           <p style={rotulo}>Modo seguro (HTTPS)</p>
           <button
+            type="button"
             style={config.seguro ? botaoAtivo : botao}
             onClick={() => mudarConfig({ seguro: !config.seguro })}
           >
@@ -1056,7 +1182,7 @@ export default function App() {
           </p>
 
           <p style={rotulo}>Limpeza</p>
-          <button style={botao} onClick={limparDados}>
+          <button type="button" style={botao} onClick={limparDados}>
             🧽 Limpar cookies e cache
           </button>
         </div>
@@ -1070,14 +1196,19 @@ export default function App() {
           bottom: 10,
           display: 'flex',
           zIndex: 5,
-          backgroundColor: escuro ? 'rgba(10,16,36,0.92)' : 'rgba(255,255,255,0.95)',
+          backgroundColor: escuro ? 'rgba(8,19,38,0.94)' : 'rgba(255,255,255,0.96)',
           border: `1px solid ${t.borda}`,
           borderRadius: 24,
-          backdropFilter: 'blur(8px)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          boxShadow: escuro ? '0 8px 32px rgba(0,0,0,0.22)' : '0 8px 32px rgba(37,99,235,0.1)',
+          maxWidth: 760,
+          margin: '0 auto',
         }}
       >
         {ABAS.map((a) => (
           <button
+            type="button"
             key={a.id}
             onClick={() => {
               setAba(a.id)
@@ -1085,7 +1216,8 @@ export default function App() {
             }}
             style={{
               flex: 1,
-              padding: '10px 4px 8px 4px',
+              minWidth: 0,
+              padding: '10px 4px 8px',
               background: 'none',
               border: 'none',
               color: aba === a.id ? '#38BDF8' : t.suave,
@@ -1095,6 +1227,7 @@ export default function App() {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 3,
+              fontWeight: aba === a.id ? 750 : 500,
             }}
           >
             <Icone nome={a.id} />
